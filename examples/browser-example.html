@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSP Filter Library - Browser Example</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .example {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .result {
+            background: #f5f5f5;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        button {
+            background: #007cba;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #005a87;
+        }
+    </style>
+</head>
+<body>
+    <h1>DSP Filter Library - Browser Example</h1>
+    <p>This example demonstrates the minified DSP Filter Library running in the browser.</p>
+
+    <div class="example">
+        <h3>Complex Number Operations</h3>
+        <button onclick="testComplexNumbers()">Test Complex Numbers</button>
+        <div id="complex-result" class="result"></div>
+    </div>
+
+    <div class="example">
+        <h3>Filter Design</h3>
+        <button onclick="testFilterDesign()">Design Butterworth Filter</button>
+        <div id="filter-result" class="result"></div>
+    </div>
+
+    <div class="example">
+        <h3>FFT Operations</h3>
+        <button onclick="testFFT()">Test FFT</button>
+        <div id="fft-result" class="result"></div>
+    </div>
+
+    <div class="example">
+        <h3>Window Functions</h3>
+        <button onclick="testWindows()">Test Window Functions</button>
+        <div id="window-result" class="result"></div>
+    </div>
+
+    <script src="../lib/dsp-filter-library.min.js"></script>
+    <script>
+        // Access the library from the global DSPFilterLibrary object
+        const { ComplexNum, Filter, FFT, Window } = DSPFilterLibrary;
+
+        function testComplexNumbers() {
+            const a = ComplexNum.of(3, 4);
+            const b = ComplexNum.of(1, 2);
+            const sum = ComplexNum.add(a, b);
+            const magnitude = ComplexNum.abs(a);
+            
+            document.getElementById('complex-result').innerHTML = `
+                <strong>Complex Number Operations:</strong><br>
+                a = ${JSON.stringify(a)}<br>
+                b = ${JSON.stringify(b)}<br>
+                a + b = ${JSON.stringify(sum)}<br>
+                |a| = ${magnitude}
+            `;
+        }
+
+        function testFilterDesign() {
+            try {
+                const filter = Filter.designButter('lowpass', 1000, 44100, 4);
+                const coefficients = {
+                    b: filter.b.slice(0, 5),
+                    a: filter.a.slice(0, 5)
+                };
+                
+                document.getElementById('filter-result').innerHTML = `
+                    <strong>Butterworth Lowpass Filter (1000Hz, 44100Hz, 4th order):</strong><br>
+                    b coefficients: [${coefficients.b.map(x => x.toFixed(6)).join(', ')}...]<br>
+                    a coefficients: [${coefficients.a.map(x => x.toFixed(6)).join(', ')}...]
+                `;
+            } catch (error) {
+                document.getElementById('filter-result').innerHTML = `Error: ${error.message}`;
+            }
+        }
+
+        function testFFT() {
+            const signal = [1, 2, 3, 4, 5, 6, 7, 8];
+            const fftResult = FFT.rfft(signal);
+            
+            document.getElementById('fft-result').innerHTML = `
+                <strong>FFT Operations:</strong><br>
+                Input signal: [${signal.join(', ')}]<br>
+                FFT result length: ${fftResult.length}<br>
+                First few FFT values: [${fftResult.slice(0, 3).map(c => `(${c.re.toFixed(3)}, ${c.im.toFixed(3)})`).join(', ')}...]
+            `;
+        }
+
+        function testWindows() {
+            const hannWindow = Window.hann(8);
+            const hammingWindow = Window.hamming(8);
+            
+            document.getElementById('window-result').innerHTML = `
+                <strong>Window Functions:</strong><br>
+                Hann(8): [${hannWindow.slice(0, 4).map(x => x.toFixed(3)).join(', ')}...]<br>
+                Hamming(8): [${hammingWindow.slice(0, 4).map(x => x.toFixed(3)).join(', ')}...]
+            `;
+        }
+
+        // Auto-run tests on page load
+        window.onload = function() {
+            console.log('DSP Filter Library loaded successfully!');
+            console.log('Available classes:', Object.keys(DSPFilterLibrary));
+        };
+    </script>
+</body>
+</html>
