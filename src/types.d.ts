@@ -1,4 +1,6 @@
 // types.d.ts — TypeScript type definitions for DSP Filter Library
+// Author: Davit Akobia <dav.akobia@gmail.com>
+// License: MIT
 
 export interface Complex {
   re: number;

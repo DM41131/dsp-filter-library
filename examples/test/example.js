@@ -1,4 +1,5 @@
 // test/example.js — Test file for the DSP library
+// Author: Davit Akobia <dav.akobia@gmail.com>
 // License: MIT
 
 import { ComplexNum, FFT, Filter, Window } from '../../src/index.js';

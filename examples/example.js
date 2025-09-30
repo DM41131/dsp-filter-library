@@ -1,4 +1,5 @@
 // example.js — Demonstration of the modular DSP library
+// Author: Davit Akobia <dav.akobia@gmail.com>
 // License: MIT
 
 import { ComplexNum, FFT, Filter, Window } from './index.js';

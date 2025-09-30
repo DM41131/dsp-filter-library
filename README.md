@@ -2,6 +2,8 @@
 
 A comprehensive, modular digital signal processing library for JavaScript/TypeScript with FIR/IIR filter design, FFT operations, windowing functions, and complex number utilities.
 
+**Author:** Davit Akobia <dav.akobia@gmail.com>
+
 [![npm version](https://badge.fury.io/js/dsp-filter-library.svg)](https://badge.fury.io/js/dsp-filter-library)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 

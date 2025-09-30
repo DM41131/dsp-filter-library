@@ -1,4 +1,5 @@
 // filter-class.js — Main Filter class and operations
+// Author: Davit Akobia <dav.akobia@gmail.com>
 // License: MIT
 
 import { ComplexNum as C } from './complex.js';

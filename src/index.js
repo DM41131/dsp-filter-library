@@ -1,4 +1,5 @@
 // index.js — Main entry point for DSP library
+// Author: Davit Akobia <dav.akobia@gmail.com>
 // License: MIT
 
 // Core modules

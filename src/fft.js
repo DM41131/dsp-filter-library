@@ -1,4 +1,5 @@
 // fft.js — Fast Fourier Transform operations
+// Author: Davit Akobia <dav.akobia@gmail.com>
 // License: MIT
 
 import { ComplexNum as C } from './complex.js';

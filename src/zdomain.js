@@ -1,4 +1,5 @@
 // zdomain.js — Z-domain operations for DSP
+// Author: Davit Akobia <dav.akobia@gmail.com>
 // License: MIT
 
 import { ComplexNum as C } from './complex.js';

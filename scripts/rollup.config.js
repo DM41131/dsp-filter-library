@@ -1,3 +1,7 @@
+// rollup.config.js — Rollup configuration for DSP Filter Library
+// Author: Davit Akobia <dav.akobia@gmail.com>
+// License: MIT
+
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import terser from '@rollup/plugin-terser';
