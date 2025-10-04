@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSP Filter Library - Advanced Demonstration</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { color: #2c3e50; margin-bottom: 10px; }
+        .header p { color: #7f8c8d; font-size: 1.1em; }
+        
+        .demo-section { background: white; margin: 20px 0; padding: 25px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .demo-section h2 { color: #34495e; margin-bottom: 20px; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        
+        .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0; }
+        .control-group { display: flex; flex-direction: column; }
+        .control-group label { font-weight: bold; margin-bottom: 5px; color: #2c3e50; }
+        .control-group input, .control-group select { padding: 8px; border: 1px solid #bdc3c7; border-radius: 5px; }
+        .control-group input[type="range"] { width: 100%; }
+        
+        .button-group { display: flex; gap: 10px; margin: 15px 0; flex-wrap: wrap; }
+        .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: all 0.3s; }
+        .btn-primary { background: #3498db; color: white; }
+        .btn-primary:hover { background: #2980b9; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-success:hover { background: #229954; }
+        .btn-warning { background: #f39c12; color: white; }
+        .btn-warning:hover { background: #e67e22; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-danger:hover { background: #c0392b; }
+        
+        .result { background: #ecf0f1; padding: 15px; border-radius: 5px; margin: 15px 0; font-family: 'Courier New', monospace; }
+        .chart-container { position: relative; height: 400px; margin: 20px 0; }
+        .chart-container canvas { max-height: 400px; }
+        
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .full-width { grid-column: 1 / -1; }
+        
+        .status { padding: 10px; border-radius: 5px; margin: 10px 0; }
+        .status.success { background: #d5f4e6; color: #27ae60; border: 1px solid #27ae60; }
+        .status.error { background: #fadbd8; color: #e74c3c; border: 1px solid #e74c3c; }
+        .status.info { background: #d6eaf8; color: #3498db; border: 1px solid #3498db; }
+        
+        .audio-controls { display: flex; align-items: center; gap: 15px; margin: 15px 0; }
+        .audio-controls button { padding: 8px 15px; }
+        
+        @media (max-width: 768px) {
+            .grid { grid-template-columns: 1fr; }
+            .controls { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎵 DSP Filter Library - Advanced Demonstration</h1>
+            <p>Comprehensive showcase of digital signal processing capabilities</p>
+        </div>
+
+        <!-- Complex Numbers Demo -->
+        <div class="demo-section">
+            <h2>🔢 Complex Number Operations</h2>
+            <div class="controls">
+                <div class="control-group">
+                    <label>Real Part 1:</label>
+                    <input type="number" id="c1-real" value="3" step="0.1">
+                </div>
+                <div class="control-group">
+                    <label>Imaginary Part 1:</label>
+                    <input type="number" id="c1-imag" value="4" step="0.1">
+                </div>
+                <div class="control-group">
+                    <label>Real Part 2:</label>
+                    <input type="number" id="c2-real" value="1" step="0.1">
+                </div>
+                <div class="control-group">
+                    <label>Imaginary Part 2:</label>
+                    <input type="number" id="c2-imag" value="2" step="0.1">
+                </div>
+            </div>
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="testComplexOperations()">Test Operations</button>
+                <button class="btn btn-success" onclick="testComplexFunctions()">Test Functions</button>
+            </div>
+            <div id="complex-result" class="result"></div>
+        </div>
+
+        <!-- Filter Design Demo -->
+        <div class="demo-section">
+            <h2>🎛️ Filter Design & Analysis</h2>
+            <div class="grid">
+                <div>
+                    <h3>Filter Parameters</h3>
+                    <div class="controls">
+                        <div class="control-group">
+                            <label>Filter Type:</label>
+                            <select id="filter-type">
+                                <option value="lowpass">Lowpass</option>
+                                <option value="highpass">Highpass</option>
+                                <option value="bandpass">Bandpass</option>
+                                <option value="bandstop">Bandstop</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label>Design Method:</label>
+                            <select id="design-method">
+                                <option value="butterworth">Butterworth</option>
+                                <option value="cheby1">Chebyshev I</option>
+                                <option value="cheby2">Chebyshev II</option>
+                                <option value="linkwitz-riley">Linkwitz-Riley</option>
+                                <option value="fir">FIR</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label>Cutoff Frequency (Hz):</label>
+                            <input type="range" id="cutoff-freq" min="100" max="8000" value="1000">
+                            <span id="cutoff-display">1000 Hz</span>
+                        </div>
+                        <div class="control-group" id="bandwidth-control" style="display: none;">
+                            <label>Bandwidth (Hz):</label>
+                            <input type="range" id="bandwidth-freq" min="50" max="2000" value="200">
+                            <span id="bandwidth-display">200 Hz</span>
+                        </div>
+                        <div class="control-group">
+                            <label>Sample Rate (Hz):</label>
+                            <input type="number" id="sample-rate" value="44100">
+                        </div>
+                        <div class="control-group">
+                            <label>Filter Order:</label>
+                            <input type="range" id="filter-order" min="1" max="200" value="4">
+                            <span id="order-display">4</span>
+                        </div>
+                        <div class="control-group">
+                            <label>Window Type (FIR):</label>
+                            <select id="window-type">
+                                <option value="hann">Hann</option>
+                                <option value="hamming">Hamming</option>
+                                <option value="blackman">Blackman</option>
+                                <option value="kaiser">Kaiser</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="button-group">
+                        <button class="btn btn-primary" onclick="designFilter()">Design Filter</button>
+                        <button class="btn btn-success" onclick="analyzeFilter()">Analyze Response</button>
+                        <button class="btn btn-warning" onclick="testFilterAnalysis()">Test Analysis</button>
+                    </div>
+                </div>
+                <div>
+                    <h3>Frequency Response</h3>
+                    <div class="chart-container">
+                        <canvas id="freqResponseChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="phaseResponseChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="impulseResponseChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="zplaneChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div id="filter-result" class="result"></div>
+        </div>
+
+        <!-- Window Functions Demo -->
+        <div class="demo-section">
+            <h2>🪟 Window Functions</h2>
+            <div class="controls">
+                <div class="control-group">
+                    <label>Window Length:</label>
+                    <input type="range" id="window-length" min="16" max="256" value="64">
+                    <span id="length-display">64</span>
+                </div>
+                <div class="control-group">
+                    <label>Window Type:</label>
+                    <select id="window-select">
+                        <option value="hann">Hann</option>
+                        <option value="hamming">Hamming</option>
+                        <option value="blackman">Blackman</option>
+                        <option value="blackmanHarris">Blackman-Harris</option>
+                        <option value="kaiser">Kaiser</option>
+                        <option value="tukey">Tukey</option>
+                        <option value="gauss">Gaussian</option>
+                    </select>
+                </div>
+            </div>
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="generateWindow()">Generate Window</button>
+                <button class="btn btn-success" onclick="compareWindows()">Compare Windows</button>
+            </div>
+            <div class="chart-container">
+                <canvas id="windowChart"></canvas>
+            </div>
+            <div id="window-result" class="result"></div>
+        </div>
+
+        <!-- FFT Demo -->
+        <div class="demo-section">
+            <h2>📊 FFT Analysis</h2>
+            <div class="grid">
+                <div>
+                    <h3>Signal Generation</h3>
+                    <div class="controls">
+                        <div class="control-group">
+                            <label>Frequency 1 (Hz):</label>
+                            <input type="range" id="freq1" min="100" max="2000" value="440">
+                            <span id="freq1-display">440 Hz</span>
+                        </div>
+                        <div class="control-group">
+                            <label>Frequency 2 (Hz):</label>
+                            <input type="range" id="freq2" min="100" max="2000" value="880">
+                            <span id="freq2-display">880 Hz</span>
+                        </div>
+                        <div class="control-group">
+                            <label>Amplitude 1:</label>
+                            <input type="range" id="amp1" min="0.1" max="2" step="0.1" value="1">
+                            <span id="amp1-display">1.0</span>
+                        </div>
+                        <div class="control-group">
+                            <label>Amplitude 2:</label>
+                            <input type="range" id="amp2" min="0.1" max="2" step="0.1" value="0.5">
+                            <span id="amp2-display">0.5</span>
+                        </div>
+                        <div class="control-group">
+                            <label>Signal Length:</label>
+                            <input type="range" id="signal-length" min="64" max="1024" value="256">
+                            <span id="signal-length-display">256</span>
+                        </div>
+                    </div>
+                    <div class="button-group">
+                        <button class="btn btn-primary" onclick="generateSignal()">Generate Signal</button>
+                        <button class="btn btn-success" onclick="performFFT()">Perform FFT</button>
+                        <button class="btn btn-warning" onclick="performIFFT()">Perform IFFT</button>
+                    </div>
+                </div>
+                <div>
+                    <h3>FFT Results</h3>
+                    <div class="chart-container">
+                        <canvas id="fftChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div id="fft-result" class="result"></div>
+        </div>
+
+        <!-- Audio Processing Demo -->
+        <div class="demo-section">
+            <h2>🎤 Real-time Audio Processing</h2>
+            <div class="audio-controls">
+                <button class="btn btn-primary" id="start-audio">Start Audio</button>
+                <button class="btn btn-danger" id="stop-audio" disabled>Stop Audio</button>
+                <span id="audio-status" class="status info">Click "Start Audio" to begin</span>
+            </div>
+            <div class="controls">
+                <div class="control-group">
+                    <label>Filter Type:</label>
+                    <select id="audio-filter-type">
+                        <option value="lowpass">Lowpass</option>
+                        <option value="highpass">Highpass</option>
+                        <option value="bandpass">Bandpass</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Cutoff (Hz):</label>
+                    <input type="range" id="audio-cutoff" min="100" max="8000" value="1000">
+                    <span id="audio-cutoff-display">1000 Hz</span>
+                </div>
+                <div class="control-group">
+                    <label>Filter Order:</label>
+                    <input type="range" id="audio-order" min="1" max="6" value="2">
+                    <span id="audio-order-display">2</span>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="audioChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Signal Processing Demo -->
+        <div class="demo-section">
+            <h2>🔧 Advanced Signal Processing</h2>
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="testConvolution()">Test Convolution</button>
+                <button class="btn btn-success" onclick="testOverlapAdd()">Test Overlap-Add</button>
+                <button class="btn btn-warning" onclick="testGroupDelay()">Test Group Delay</button>
+                <button class="btn btn-danger" onclick="testAllFeatures()">Run All Tests</button>
+            </div>
+            <div id="processing-result" class="result"></div>
+        </div>
+    </div>
+
+    <script src="../lib/dsp-filter-library.min.js"></script>
+    <script>
+        // Global variables
+        let audioContext, audioFilter, isAudioActive = false;
+        let freqResponseChart, phaseResponseChart, impulseResponseChart, zplaneChart, windowChart, fftChart, audioChart;
+
+        // Initialize charts
+        function initCharts() {
+            // Frequency Response Chart
+            const freqCtx = document.getElementById('freqResponseChart').getContext('2d');
+            freqResponseChart = new Chart(freqCtx, {
+                type: 'line',
+                data: { labels: [], datasets: [] },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    elements: {
+                        point: {
+                            radius: 0
+                        }
+                    },
+                    scales: {
+                        x: { type: 'linear', title: { display: true, text: 'Frequency (Hz)' } },
+                        y: { title: { display: true, text: 'Magnitude (dB)' } }
+                    }
+                }
+            });
+
+            // Phase Response Chart
+            const phaseCtx = document.getElementById('phaseResponseChart').getContext('2d');
+            phaseResponseChart = new Chart(phaseCtx, {
+                type: 'line',
+                data: { labels: [], datasets: [] },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    elements: {
+                        point: {
+                            radius: 0
+                        }
+                    },
+                    scales: {
+                        x: { type: 'linear', title: { display: true, text: 'Frequency (Hz)' } },
+                        y: { title: { display: true, text: 'Phase (radians)' } }
+                    }
+                }
+            });
+
+            // Impulse Response Chart
+            const impulseCtx = document.getElementById('impulseResponseChart').getContext('2d');
+            impulseResponseChart = new Chart(impulseCtx, {
+                type: 'line',
+                data: { labels: [], datasets: [] },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    elements: {
+                        point: {
+                            radius: 0
+                        }
+                    },
+                    scales: {
+                        x: { title: { display: true, text: 'Time (samples)' } },
+                        y: { title: { display: true, text: 'Amplitude' } }
+                    }
+                }
+            });
+
+            // Z-Plane Chart
+            const zplaneCtx = document.getElementById('zplaneChart').getContext('2d');
+            zplaneChart = new Chart(zplaneCtx, {
+                type: 'scatter',
+                data: { labels: [], datasets: [] },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { 
+                            title: { display: true, text: 'Real Part' },
+                            min: -1.2,
+                            max: 1.2
+                        },
+                        y: { 
+                            title: { display: true, text: 'Imaginary Part' },
+                            min: -1.2,
+                            max: 1.2
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: {
+                                usePointStyle: true
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Window Chart
+            const windowCtx = document.getElementById('windowChart').getContext('2d');
+            windowChart = new Chart(windowCtx, {
+                type: 'line',
+                data: { labels: [], datasets: [] },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    elements: {
+                        point: {
+                            radius: 0
+                        }
+                    },
+                    scales: {
+                        x: { title: { display: true, text: 'Sample' } },
+                        y: { title: { display: true, text: 'Amplitude' } }
+                    }
+                }
+            });
+
+            // FFT Chart
+            const fftCtx = document.getElementById('fftChart').getContext('2d');
+            fftChart = new Chart(fftCtx, {
+                type: 'line',
+                data: { labels: [], datasets: [] },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    elements: {
+                        point: {
+                            radius: 0
+                        }
+                    },
+                    scales: {
+                        x: { title: { display: true, text: 'Frequency (Hz)' } },
+                        y: { title: { display: true, text: 'Magnitude' } }
+                    }
+                }
+            });
+
+            // Audio Chart
+            const audioCtx = document.getElementById('audioChart').getContext('2d');
+            audioChart = new Chart(audioCtx, {
+                type: 'line',
+                data: { labels: [], datasets: [] },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    elements: {
+                        point: {
+                            radius: 0
+                        }
+                    },
+                    scales: {
+                        x: { title: { display: true, text: 'Time' } },
+                        y: { title: { display: true, text: 'Amplitude' } }
+                    }
+                }
+            });
+        }
+
+        // Complex Number Operations
+        function testComplexOperations() {
+            const { ComplexNum } = DSPFilterLibrary;
+            const c1 = ComplexNum.of(parseFloat(document.getElementById('c1-real').value), parseFloat(document.getElementById('c1-imag').value));
+            const c2 = ComplexNum.of(parseFloat(document.getElementById('c2-real').value), parseFloat(document.getElementById('c2-imag').value));
+            
+            const sum = ComplexNum.add(c1, c2);
+            const product = ComplexNum.mul(c1, c2);
+            const difference = ComplexNum.sub(c1, c2);
+            const quotient = ComplexNum.div(c1, c2);
+            const magnitude1 = ComplexNum.abs(c1);
+            const phase1 = ComplexNum.arg(c1);
+            const conjugate1 = ComplexNum.conj(c1);
+            
+            document.getElementById('complex-result').innerHTML = `
+                <strong>Complex Number Operations:</strong><br>
+                c1 = ${JSON.stringify(c1)}<br>
+                c2 = ${JSON.stringify(c2)}<br>
+                c1 + c2 = ${JSON.stringify(sum)}<br>
+                c1 - c2 = ${JSON.stringify(difference)}<br>
+                c1 × c2 = ${JSON.stringify(product)}<br>
+                c1 ÷ c2 = ${JSON.stringify(quotient)}<br>
+                |c1| = ${magnitude1.toFixed(6)}<br>
+                ∠c1 = ${phase1.toFixed(6)} radians<br>
+                c1* = ${JSON.stringify(conjugate1)}
+            `;
+        }
+
+        function testComplexFunctions() {
+            const { ComplexNum } = DSPFilterLibrary;
+            const c = ComplexNum.of(3, 4);
+            const magnitude = ComplexNum.abs(c);
+            const phase = ComplexNum.arg(c);
+            const conjugate = ComplexNum.conj(c);
+            const scaled = ComplexNum.scale(c, 2);
+            const expj = ComplexNum.expj(Math.PI/4);
+            
+            document.getElementById('complex-result').innerHTML += `
+                <br><strong>Complex Functions:</strong><br>
+                |c| = ${magnitude.toFixed(6)}<br>
+                ∠c = ${phase.toFixed(6)} radians<br>
+                c* = ${JSON.stringify(conjugate)}<br>
+                2c = ${JSON.stringify(scaled)}<br>
+                e^(jπ/4) = ${JSON.stringify(expj)}
+            `;
+        }
+
+        // Filter Design
+        function designFilter() {
+            const { Filter } = DSPFilterLibrary;
+            const type = document.getElementById('filter-type').value;
+            const method = document.getElementById('design-method').value;
+            const cutoff = parseFloat(document.getElementById('cutoff-freq').value);
+            const fs = parseFloat(document.getElementById('sample-rate').value);
+            const order = parseInt(document.getElementById('filter-order').value);
+            const window = document.getElementById('window-type').value;
+            
+            try {
+                let filter;
+                let cutoffParam;
+                
+                // Handle bandpass and bandstop filters that need frequency range
+                if (type === 'bandpass' || type === 'bandstop') {
+                    const bandwidth = parseFloat(document.getElementById('bandwidth-freq').value);
+                    cutoffParam = [cutoff - bandwidth/2, cutoff + bandwidth/2];
+                } else {
+                    cutoffParam = cutoff;
+                }
+                
+                if (method === 'fir') {
+                    filter = Filter.designFIR(type, cutoffParam, fs, order, window);
+                } else if (method === 'butterworth') {
+                    filter = Filter.designButter(type, cutoffParam, fs, order);
+                } else if (method === 'cheby1') {
+                    filter = Filter.designCheby1(type, cutoffParam, fs, order, 1);
+                } else if (method === 'cheby2') {
+                    filter = Filter.designCheby2(type, cutoffParam, fs, order, 40);
+                } else if (method === 'linkwitz-riley') {
+                    filter = Filter.designLinkwitzRiley(type, cutoffParam, fs, order);
+                }
+                
+                const coeffs = {
+                    b: filter.b.slice(0, Math.min(10, filter.b.length)),
+                    a: filter.a.slice(0, Math.min(10, filter.a.length))
+                };
+                
+                const cutoffDisplay = Array.isArray(cutoffParam) 
+                    ? `${cutoffParam[0].toFixed(1)} - ${cutoffParam[1].toFixed(1)} Hz`
+                    : `${cutoff} Hz`;
+                
+                document.getElementById('filter-result').innerHTML = `
+                    <strong>Filter Design Results:</strong><br>
+                    Type: ${type.toUpperCase()}<br>
+                    Method: ${method.toUpperCase()}<br>
+                    Cutoff: ${cutoffDisplay}<br>
+                    Order: ${order}<br>
+                    b coefficients: [${coeffs.b.map(x => x.toFixed(6)).join(', ')}...]<br>
+                    a coefficients: [${coeffs.a.map(x => x.toFixed(6)).join(', ')}...]
+                `;
+                
+                analyzeFilterResponse(filter, fs);
+            } catch (error) {
+                document.getElementById('filter-result').innerHTML = `<span class="status error">Error: ${error.message}</span>`;
+            }
+        }
+
+        function analyzeFilterResponse(filter, fs) {
+            try {
+                // For highpass IIR filters, use custom calculation due to library issues
+                const type = document.getElementById('filter-type').value;
+                const method = document.getElementById('design-method').value;
+                
+                if (type === 'highpass' && method !== 'fir') {
+                    console.log('Using custom calculation for highpass IIR filter');
+                    calculateCustomFrequencyResponse(filter, fs);
+                    return;
+                }
+                
+                // Try library's built-in method first for other filters
+                const response = filter.frequencyResponse(fs, 1024);
+                const frequencies = response.f;
+                const magnitudes = response.mag.map(mag => 20 * Math.log10(Math.max(mag, 1e-10)));
+                const phases = response.phase;
+                
+                // Check if magnitudes are valid (not NaN or infinite)
+                if (magnitudes.some(m => !isFinite(m) || isNaN(m))) {
+                    throw new Error('Invalid magnitude values from library method');
+                }
+                
+                // Update magnitude response chart
+                freqResponseChart.data.labels = frequencies.map(f => f.toFixed(1));
+                freqResponseChart.data.datasets = [{
+                    label: 'Magnitude Response',
+                    data: magnitudes,
+                    borderColor: 'rgb(75, 192, 192)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    tension: 0.1
+                }];
+                freqResponseChart.update();
+                
+                // Update phase response chart
+                phaseResponseChart.data.labels = frequencies.map(f => f.toFixed(1));
+                phaseResponseChart.data.datasets = [{
+                    label: 'Phase Response',
+                    data: phases,
+                    borderColor: 'rgb(255, 99, 132)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    tension: 0.1
+                }];
+                phaseResponseChart.update();
+                
+                // Calculate and display impulse response
+                calculateImpulseResponse(filter, fs);
+                
+                // Calculate and display Z-plane
+                calculateZPlane(filter);
+                
+            } catch (error) {
+                console.warn('Library method failed, using custom calculation:', error);
+                calculateCustomFrequencyResponse(filter, fs);
+            }
+        }
+        
+        function calculateCustomFrequencyResponse(filter, fs) {
+            try {
+                const N = 1024;
+                const frequencies = [];
+                const magnitudes = [];
+                const phases = [];
+                
+                for (let i = 0; i < N; i++) {
+                    const f = (i * fs) / (2 * N);
+                    const w = 2 * Math.PI * f / fs;
+                    const z = { re: Math.cos(w), im: Math.sin(w) };
+                    
+                    // Calculate H(z) = B(z)/A(z) using proper complex arithmetic
+                    let num = { re: 0, im: 0 };
+                    let den = { re: 0, im: 0 };
+                    
+                    // Calculate B(z) = sum(b[k] * z^(-k))
+                    for (let k = 0; k < filter.b.length; k++) {
+                        const zk = { 
+                            re: Math.cos(-k * w), 
+                            im: Math.sin(-k * w) 
+                        };
+                        num = { 
+                            re: num.re + filter.b[k] * zk.re, 
+                            im: num.im + filter.b[k] * zk.im 
+                        };
+                    }
+                    
+                    // Calculate A(z) = sum(a[k] * z^(-k))
+                    for (let k = 0; k < filter.a.length; k++) {
+                        const zk = { 
+                            re: Math.cos(-k * w), 
+                            im: Math.sin(-k * w) 
+                        };
+                        den = { 
+                            re: den.re + filter.a[k] * zk.re, 
+                            im: den.im + filter.a[k] * zk.im 
+                        };
+                    }
+                    
+                    // Calculate |H(z)| = |B(z)| / |A(z)|
+                    const numMag = Math.sqrt(num.re*num.re + num.im*num.im);
+                    const denMag = Math.sqrt(den.re*den.re + den.im*den.im);
+                    const mag = numMag / Math.max(denMag, 1e-10);
+                    
+                    // Calculate phase = arg(B(z)) - arg(A(z))
+                    const phase = Math.atan2(num.im, num.re) - Math.atan2(den.im, den.re);
+                    
+                    frequencies.push(f);
+                    magnitudes.push(20 * Math.log10(Math.max(mag, 1e-10)));
+                    phases.push(phase);
+                }
+                
+                // Update magnitude response chart
+                freqResponseChart.data.labels = frequencies.map(f => f.toFixed(1));
+                freqResponseChart.data.datasets = [{
+                    label: 'Magnitude Response (Corrected)',
+                    data: magnitudes,
+                    borderColor: 'rgb(54, 162, 235)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    tension: 0.1
+                }];
+                freqResponseChart.update();
+                
+                // Update phase response chart
+                phaseResponseChart.data.labels = frequencies.map(f => f.toFixed(1));
+                phaseResponseChart.data.datasets = [{
+                    label: 'Phase Response (Corrected)',
+                    data: phases,
+                    borderColor: 'rgb(255, 99, 132)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    tension: 0.1
+                }];
+                phaseResponseChart.update();
+                
+                // Calculate and display impulse response
+                calculateImpulseResponse(filter, fs);
+                
+                // Calculate and display Z-plane
+                calculateZPlane(filter);
+                
+            } catch (customError) {
+                console.error('Custom calculation failed:', customError);
+                document.getElementById('filter-result').innerHTML = `<span class="status error">Error calculating frequency response: ${customError.message}</span>`;
+            }
+        }
+        
+        function calculateImpulseResponse(filter, fs) {
+            try {
+                const N = 512; // Number of samples for impulse response
+                const impulse = new Array(N).fill(0);
+                impulse[0] = 1; // Unit impulse
+                
+                // Apply filter to impulse
+                const response = filter.applySignal(impulse);
+                
+                // Create time axis
+                const timeSamples = Array.from({length: N}, (_, i) => i);
+                
+                // Update impulse response chart
+                impulseResponseChart.data.labels = timeSamples;
+                impulseResponseChart.data.datasets = [{
+                    label: 'Impulse Response',
+                    data: response,
+                    borderColor: 'rgb(75, 192, 192)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    tension: 0.1
+                }];
+                impulseResponseChart.update();
+                
+            } catch (error) {
+                console.error('Error calculating impulse response:', error);
+            }
+        }
+        
+        function calculateZPlane(filter) {
+            try {
+                // Calculate poles and zeros from filter coefficients
+                const poles = findRoots(filter.a);
+                const zeros = findRoots(filter.b);
+                
+                // Create unit circle
+                const unitCircle = [];
+                for (let i = 0; i <= 100; i++) {
+                    const angle = (2 * Math.PI * i) / 100;
+                    unitCircle.push({
+                        x: Math.cos(angle),
+                        y: Math.sin(angle)
+                    });
+                }
+                
+                // Prepare datasets
+                const datasets = [
+                    {
+                        label: 'Unit Circle',
+                        data: unitCircle,
+                        borderColor: 'rgb(128, 128, 128)',
+                        backgroundColor: 'rgba(128, 128, 128, 0.1)',
+                        pointRadius: 0,
+                        showLine: true,
+                        fill: false
+                    }
+                ];
+                
+                // Add poles
+                if (poles.length > 0) {
+                    datasets.push({
+                        label: 'Poles',
+                        data: poles.map(p => ({ x: p.re, y: p.im })),
+                        borderColor: 'rgb(255, 0, 0)',
+                        backgroundColor: 'rgb(255, 0, 0)',
+                        pointRadius: 8,
+                        pointStyle: 'cross',
+                        showLine: false
+                    });
+                }
+                
+                // Add zeros
+                if (zeros.length > 0) {
+                    datasets.push({
+                        label: 'Zeros',
+                        data: zeros.map(z => ({ x: z.re, y: z.im })),
+                        borderColor: 'rgb(0, 0, 255)',
+                        backgroundColor: 'rgb(0, 0, 255)',
+                        pointRadius: 6,
+                        pointStyle: 'circle',
+                        showLine: false
+                    });
+                }
+                
+                // Update Z-plane chart
+                zplaneChart.data.datasets = datasets;
+                zplaneChart.update();
+                
+            } catch (error) {
+                console.error('Error calculating Z-plane:', error);
+            }
+        }
+        
+        function findRoots(coeffs) {
+            // Simple root finding for polynomials up to degree 4
+            const roots = [];
+            
+            if (coeffs.length === 1) {
+                // Constant polynomial
+                return roots;
+            } else if (coeffs.length === 2) {
+                // Linear: ax + b = 0
+                const root = -coeffs[1] / coeffs[0];
+                roots.push({ re: root, im: 0 });
+            } else if (coeffs.length === 3) {
+                // Quadratic: ax² + bx + c = 0
+                const a = coeffs[0], b = coeffs[1], c = coeffs[2];
+                const discriminant = b * b - 4 * a * c;
+                if (discriminant >= 0) {
+                    const root1 = (-b + Math.sqrt(discriminant)) / (2 * a);
+                    const root2 = (-b - Math.sqrt(discriminant)) / (2 * a);
+                    roots.push({ re: root1, im: 0 });
+                    roots.push({ re: root2, im: 0 });
+                } else {
+                    const real = -b / (2 * a);
+                    const imag = Math.sqrt(-discriminant) / (2 * a);
+                    roots.push({ re: real, im: imag });
+                    roots.push({ re: real, im: -imag });
+                }
+            } else {
+                // For higher order polynomials, use numerical methods
+                // This is a simplified approach - for production use a proper root finder
+                const n = coeffs.length - 1;
+                for (let i = 0; i < n; i++) {
+                    // Use random initial guess for numerical root finding
+                    const guess = { re: Math.random() * 2 - 1, im: Math.random() * 2 - 1 };
+                    const root = newtonRaphson(coeffs, guess);
+                    if (root) roots.push(root);
+                }
+            }
+            
+            return roots;
+        }
+        
+        function newtonRaphson(coeffs, initialGuess, maxIterations = 100) {
+            let z = initialGuess;
+            
+            for (let iter = 0; iter < maxIterations; iter++) {
+                const [f, df] = evaluatePolynomialAndDerivative(coeffs, z);
+                const magnitude = Math.sqrt(f.re * f.re + f.im * f.im);
+                
+                if (magnitude < 1e-10) {
+                    return z; // Converged
+                }
+                
+                // Newton-Raphson update: z_new = z - f(z)/f'(z)
+                const denominator = df.re * df.re + df.im * df.im;
+                if (denominator < 1e-10) break; // Avoid division by zero
+                
+                const z_new = {
+                    re: z.re - (f.re * df.re + f.im * df.im) / denominator,
+                    im: z.im - (f.im * df.re - f.re * df.im) / denominator
+                };
+                
+                z = z_new;
+            }
+            
+            return null; // Did not converge
+        }
+        
+        function evaluatePolynomialAndDerivative(coeffs, z) {
+            let f = { re: 0, im: 0 };
+            let df = { re: 0, im: 0 };
+            
+            // Evaluate polynomial: f(z) = sum(coeffs[k] * z^k)
+            for (let k = 0; k < coeffs.length; k++) {
+                const zk = complexPower(z, k);
+                f.re += coeffs[k] * zk.re;
+                f.im += coeffs[k] * zk.im;
+                
+                // Evaluate derivative: df/dz = sum(k * coeffs[k] * z^(k-1))
+                if (k > 0) {
+                    const zk_minus_1 = complexPower(z, k - 1);
+                    df.re += k * coeffs[k] * zk_minus_1.re;
+                    df.im += k * coeffs[k] * zk_minus_1.im;
+                }
+            }
+            
+            return [f, df];
+        }
+        
+        function complexPower(z, n) {
+            if (n === 0) return { re: 1, im: 0 };
+            if (n === 1) return { re: z.re, im: z.im };
+            
+            // Use De Moivre's theorem: z^n = r^n * (cos(nθ) + i*sin(nθ))
+            const r = Math.sqrt(z.re * z.re + z.im * z.im);
+            const theta = Math.atan2(z.im, z.re);
+            const rn = Math.pow(r, n);
+            const nTheta = n * theta;
+            
+            return {
+                re: rn * Math.cos(nTheta),
+                im: rn * Math.sin(nTheta)
+            };
+        }
+
+        function analyzeFilter() {
+            const type = document.getElementById('filter-type').value;
+            const method = document.getElementById('design-method').value;
+            const cutoff = parseFloat(document.getElementById('cutoff-freq').value);
+            const fs = parseFloat(document.getElementById('sample-rate').value);
+            const order = parseInt(document.getElementById('filter-order').value);
+            
+            try {
+                const { Filter } = DSPFilterLibrary;
+                let filter;
+                let cutoffParam;
+                
+                // Handle bandpass and bandstop filters that need frequency range
+                if (type === 'bandpass' || type === 'bandstop') {
+                    const bandwidth = parseFloat(document.getElementById('bandwidth-freq').value);
+                    cutoffParam = [cutoff - bandwidth/2, cutoff + bandwidth/2];
+                } else {
+                    cutoffParam = cutoff;
+                }
+                
+                if (method === 'fir') {
+                    const window = document.getElementById('window-type').value;
+                    filter = Filter.designFIR(type, cutoffParam, fs, order, window);
+                } else if (method === 'butterworth') {
+                    filter = Filter.designButter(type, cutoffParam, fs, order);
+                } else if (method === 'cheby1') {
+                    filter = Filter.designCheby1(type, cutoffParam, fs, order, 1);
+                } else if (method === 'cheby2') {
+                    filter = Filter.designCheby2(type, cutoffParam, fs, order, 40);
+                } else if (method === 'linkwitz-riley') {
+                    filter = Filter.designLinkwitzRiley(type, cutoffParam, fs, order);
+                }
+                
+                analyzeFilterResponse(filter, fs);
+                document.getElementById('filter-result').innerHTML = `
+                    <span class="status success">Filter analysis completed. Check the frequency response chart above.</span>
+                `;
+            } catch (error) {
+                document.getElementById('filter-result').innerHTML = `<span class="status error">Error: ${error.message}</span>`;
+            }
+        }
+
+        function testFilterAnalysis() {
+            const { Filter, Z } = DSPFilterLibrary;
+            const filter = Filter.designButter('lowpass', 1000, 44100, 4);
+            const response = filter.frequencyResponse(44100, 512);
+            const groupDelayResult = Z.groupDelay(filter.b, filter.a, 256);
+            
+            const dcGain = response.mag[0];
+            const nyquistGain = response.mag[response.mag.length - 1];
+            const avgGroupDelay = groupDelayResult.gd.reduce((a, b) => a + b, 0) / groupDelayResult.gd.length;
+            
+            document.getElementById('filter-result').innerHTML = `
+                <strong>Filter Analysis Results:</strong><br>
+                DC Gain: ${dcGain.toFixed(6)}<br>
+                Nyquist Gain: ${nyquistGain.toFixed(6)}<br>
+                Average Group Delay: ${avgGroupDelay.toFixed(3)} samples<br>
+                Filter Order: ${filter.b.length - 1}<br>
+                Stability: ${Z.isStable() ? 'Stable' : 'Unstable'}
+            `;
+        }
+
+        // Window Functions
+        function generateWindow() {
+            const { Window } = DSPFilterLibrary;
+            const length = parseInt(document.getElementById('window-length').value);
+            const type = document.getElementById('window-select').value;
+            
+            const window = Window.byName(type, length);
+            
+            windowChart.data.labels = Array.from({length}, (_, i) => i);
+            windowChart.data.datasets = [{
+                label: `${type} Window (N=${length})`,
+                data: window,
+                borderColor: 'rgb(255, 99, 132)',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                tension: 0.1
+            }];
+            windowChart.update();
+            
+            document.getElementById('window-result').innerHTML = `
+                <strong>Window Function Generated:</strong><br>
+                Type: ${type}<br>
+                Length: ${length}<br>
+                First 5 values: [${window.slice(0, 5).map(x => x.toFixed(6)).join(', ')}...]
+            `;
+        }
+
+        function compareWindows() {
+            const { Window } = DSPFilterLibrary;
+            const length = parseInt(document.getElementById('window-length').value);
+            const windows = ['hann', 'hamming', 'blackman', 'kaiser'];
+            const colors = ['rgb(255, 99, 132)', 'rgb(54, 162, 235)', 'rgb(255, 205, 86)', 'rgb(75, 192, 192)'];
+            
+            windowChart.data.labels = Array.from({length}, (_, i) => i);
+            windowChart.data.datasets = windows.map((type, i) => ({
+                label: type,
+                data: Window.byName(type, length),
+                borderColor: colors[i],
+                backgroundColor: colors[i] + '20',
+                tension: 0.1
+            }));
+            windowChart.update();
+        }
+
+        // FFT Analysis
+        function generateSignal() {
+            const freq1 = parseFloat(document.getElementById('freq1').value);
+            const freq2 = parseFloat(document.getElementById('freq2').value);
+            const amp1 = parseFloat(document.getElementById('amp1').value);
+            const amp2 = parseFloat(document.getElementById('amp2').value);
+            const length = parseInt(document.getElementById('signal-length').value);
+            const fs = 44100;
+            
+            const signal = Array.from({length}, (_, n) => {
+                const t = n / fs;
+                return amp1 * Math.sin(2 * Math.PI * freq1 * t) + amp2 * Math.sin(2 * Math.PI * freq2 * t);
+            });
+            
+            fftChart.data.labels = Array.from({length}, (_, i) => i);
+            fftChart.data.datasets = [{
+                label: 'Generated Signal',
+                data: signal,
+                borderColor: 'rgb(255, 99, 132)',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                tension: 0.1
+            }];
+            fftChart.update();
+            
+            return signal;
+        }
+
+        function performFFT() {
+            const { FFT } = DSPFilterLibrary;
+            const signal = generateSignal();
+            const fftResult = FFT.rfft(signal);
+            const fs = 44100;
+            const N = signal.length;
+            const frequencies = Array.from({length: N/2}, (_, i) => i * fs / N);
+            const magnitudes = fftResult.slice(0, N/2).map(c => Math.sqrt(c.re*c.re + c.im*c.im));
+            
+            fftChart.data.labels = frequencies.map(f => f.toFixed(1));
+            fftChart.data.datasets = [{
+                label: 'FFT Magnitude',
+                data: magnitudes,
+                borderColor: 'rgb(54, 162, 235)',
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                tension: 0.1
+            }];
+            fftChart.update();
+            
+            document.getElementById('fft-result').innerHTML = `
+                <strong>FFT Analysis:</strong><br>
+                Signal length: ${signal.length}<br>
+                FFT bins: ${fftResult.length}<br>
+                Frequency resolution: ${(fs/N).toFixed(2)} Hz<br>
+                Peak frequencies: ${frequencies[magnitudes.indexOf(Math.max(...magnitudes))].toFixed(1)} Hz
+            `;
+        }
+
+        // Audio Processing
+        function startAudioProcessing() {
+            if (isAudioActive) return;
+            
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const { Filter } = DSPFilterLibrary;
+                
+                const cutoff = parseFloat(document.getElementById('audio-cutoff').value);
+                const order = parseInt(document.getElementById('audio-order').value);
+                const type = document.getElementById('audio-filter-type').value;
+                
+                audioFilter = Filter.designButter(type, cutoff, 44100, order);
+                
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                    .then(stream => {
+                        const source = audioContext.createMediaStreamSource(stream);
+                        const processor = audioContext.createScriptProcessor(4096, 1, 1);
+                        
+                        processor.onaudioprocess = (event) => {
+                            const inputBuffer = event.inputBuffer.getChannelData(0);
+                            const outputBuffer = event.outputBuffer.getChannelData(0);
+                            
+                            for (let i = 0; i < inputBuffer.length; i++) {
+                                outputBuffer[i] = audioFilter.processSample(inputBuffer[i]);
+                            }
+                            
+                            // Update visualization
+                            updateAudioVisualization(inputBuffer.slice(0, 100));
+                        };
+                        
+                        source.connect(processor);
+                        processor.connect(audioContext.destination);
+                        
+                        isAudioActive = true;
+                        document.getElementById('start-audio').disabled = true;
+                        document.getElementById('stop-audio').disabled = false;
+                        document.getElementById('audio-status').innerHTML = '<span class="status success">Audio processing active</span>';
+                    })
+                    .catch(error => {
+                        document.getElementById('audio-status').innerHTML = `<span class="status error">Error: ${error.message}</span>`;
+                    });
+            } catch (error) {
+                document.getElementById('audio-status').innerHTML = `<span class="status error">Error: ${error.message}</span>`;
+            }
+        }
+
+        function stopAudioProcessing() {
+            if (audioContext) {
+                audioContext.close();
+                audioContext = null;
+            }
+            isAudioActive = false;
+            document.getElementById('start-audio').disabled = false;
+            document.getElementById('stop-audio').disabled = true;
+            document.getElementById('audio-status').innerHTML = '<span class="status info">Audio processing stopped</span>';
+        }
+
+        function updateAudioVisualization(data) {
+            audioChart.data.labels = Array.from({length: data.length}, (_, i) => i);
+            audioChart.data.datasets = [{
+                label: 'Audio Signal',
+                data: data,
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                tension: 0.1
+            }];
+            audioChart.update();
+        }
+
+        // Advanced Signal Processing
+        function testConvolution() {
+            const { Util } = DSPFilterLibrary;
+            const signal = [1, 2, 3, 4, 5];
+            const kernel = [0.5, 0.5];
+            const result = Util.convolve(signal, kernel);
+            
+            document.getElementById('processing-result').innerHTML = `
+                <strong>Convolution Test:</strong><br>
+                Signal: [${signal.join(', ')}]<br>
+                Kernel: [${kernel.join(', ')}]<br>
+                Result: [${result.map(x => x.toFixed(3)).join(', ')}]
+            `;
+        }
+
+        function testOverlapAdd() {
+            const { FIRDesigner } = DSPFilterLibrary;
+            const signal = Array.from({length: 1000}, (_, i) => Math.sin(2 * Math.PI * i / 100));
+            const filter = [0.25, 0.5, 0.25];
+            const result = FIRDesigner.overlapAdd(filter, signal, 256);
+            
+            document.getElementById('processing-result').innerHTML += `
+                <br><strong>Overlap-Add Test:</strong><br>
+                Signal length: ${signal.length}<br>
+                Filter length: ${filter.length}<br>
+                Result length: ${result.length}<br>
+                First 5 result values: [${result.slice(0, 5).map(x => x.toFixed(3)).join(', ')}...]
+            `;
+        }
+
+        function testGroupDelay() {
+            const { Z } = DSPFilterLibrary;
+            const b = [0.25, 0.5, 0.25];
+            const a = [1, 0, 0];
+            const groupDelayResult = Z.groupDelay(b, a, 512);
+            
+            document.getElementById('processing-result').innerHTML += `
+                <br><strong>Group Delay Test:</strong><br>
+                Group delay calculated for ${groupDelayResult.gd.length} frequency points<br>
+                Average group delay: ${(groupDelayResult.gd.reduce((a, b) => a + b, 0) / groupDelayResult.gd.length).toFixed(3)} samples<br>
+                Frequency range: ${(groupDelayResult.w[0] * 44100 / (2 * Math.PI)).toFixed(1)} - ${(groupDelayResult.w[groupDelayResult.w.length-1] * 44100 / (2 * Math.PI)).toFixed(1)} Hz
+            `;
+        }
+
+        function testAllFeatures() {
+            document.getElementById('processing-result').innerHTML = '<span class="status info">Running comprehensive tests...</span>';
+            
+            setTimeout(() => {
+                testConvolution();
+                testOverlapAdd();
+                testGroupDelay();
+                
+                document.getElementById('processing-result').innerHTML += `
+                    <br><span class="status success">All tests completed successfully!</span>
+                `;
+            }, 1000);
+        }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            initCharts();
+            
+            // Range input displays
+            document.getElementById('cutoff-freq').addEventListener('input', function() {
+                document.getElementById('cutoff-display').textContent = this.value + ' Hz';
+            });
+            
+            document.getElementById('filter-order').addEventListener('input', function() {
+                document.getElementById('order-display').textContent = this.value;
+            });
+            
+            document.getElementById('window-length').addEventListener('input', function() {
+                document.getElementById('length-display').textContent = this.value;
+            });
+            
+            document.getElementById('freq1').addEventListener('input', function() {
+                document.getElementById('freq1-display').textContent = this.value + ' Hz';
+            });
+            
+            document.getElementById('freq2').addEventListener('input', function() {
+                document.getElementById('freq2-display').textContent = this.value + ' Hz';
+            });
+            
+            document.getElementById('amp1').addEventListener('input', function() {
+                document.getElementById('amp1-display').textContent = this.value;
+            });
+            
+            document.getElementById('amp2').addEventListener('input', function() {
+                document.getElementById('amp2-display').textContent = this.value;
+            });
+            
+            document.getElementById('signal-length').addEventListener('input', function() {
+                document.getElementById('signal-length-display').textContent = this.value;
+            });
+            
+            document.getElementById('audio-cutoff').addEventListener('input', function() {
+                document.getElementById('audio-cutoff-display').textContent = this.value + ' Hz';
+            });
+            
+            document.getElementById('audio-order').addEventListener('input', function() {
+                document.getElementById('audio-order-display').textContent = this.value;
+            });
+            
+            // Filter type change handler
+            document.getElementById('filter-type').addEventListener('change', function() {
+                const bandwidthControl = document.getElementById('bandwidth-control');
+                if (this.value === 'bandpass' || this.value === 'bandstop') {
+                    bandwidthControl.style.display = 'block';
+                } else {
+                    bandwidthControl.style.display = 'none';
+                }
+            });
+            
+            // Bandwidth input handler
+            document.getElementById('bandwidth-freq').addEventListener('input', function() {
+                document.getElementById('bandwidth-display').textContent = this.value + ' Hz';
+            });
+            
+            // Audio controls
+            document.getElementById('start-audio').addEventListener('click', startAudioProcessing);
+            document.getElementById('stop-audio').addEventListener('click', stopAudioProcessing);
+            
+            console.log('DSP Filter Library Advanced Demo loaded successfully!');
+            console.log('Available classes:', Object.keys(DSPFilterLibrary));
+        });
+    </script>
+</body>
+</html>

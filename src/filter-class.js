@@ -102,4 +102,14 @@ export class Filter {
         const result = IIRDesigner.cheby1(kind, cutoffHz, fs, order, rp);
         return new Filter(result.b, result.a, result.sections);
     }
+    
+    static designCheby2(kind, cutoffHz, fs, order, rs = 40) {
+        const result = IIRDesigner.cheby2(kind, cutoffHz, fs, order, rs);
+        return new Filter(result.b, result.a, result.sections);
+    }
+
+    static designLinkwitzRiley(kind, cutoffHz, fs, orderEven = 4) {
+        const result = IIRDesigner.linkwitzRiley(kind, cutoffHz, fs, orderEven);
+        return new Filter(result.b, result.a, result.sections);
+    }
 }

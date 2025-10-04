@@ -46,6 +46,14 @@ export const IIR = {
         const result = IIRDesigner.cheby1(kind, cutoffHz, fs, order, rp);
         return { b: result.b, a: result.a };
     },
+    cheby2: (kind, cutoffHz, fs, order, rs=40) => {
+        const result = IIRDesigner.cheby2(kind, cutoffHz, fs, order, rs);
+        return { b: result.b, a: result.a };
+    },
+    linkwitzRiley: (kind, cutoffHz, fs, orderEven=4) => {
+        const result = IIRDesigner.linkwitzRiley(kind, cutoffHz, fs, orderEven);
+        return { b: result.b, a: result.a };
+    },
     apply: (b, a, x) => {
         return Filter.fromTF(b,a).applySignal(x);
     },
