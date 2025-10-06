@@ -112,4 +112,14 @@ export class Filter {
         const result = IIRDesigner.linkwitzRiley(kind, cutoffHz, fs, orderEven);
         return new Filter(result.b, result.a, result.sections);
     }
+
+    static designElliptic(kind, cutoffHz, fs, order, rp = 1, rs = 40) {
+        const result = IIRDesigner.elliptic(kind, cutoffHz, fs, order, rp, rs);
+        return new Filter(result.b, result.a, result.sections);
+    }
+
+    static designBessel(kind, cutoffHz, fs, order) {
+        const result = IIRDesigner.bessel(kind, cutoffHz, fs, order);
+        return new Filter(result.b, result.a, result.sections);
+    }
 }

@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Butterworth Filter Designer</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    
+    <!-- Load source modules -->
+    <script type="module">
+        import { ComplexNum, C, Util, IIRDesigner, ZDomain } from '../../src/index.js';
+        
+        // Make modules available globally
+        window.ComplexNum = ComplexNum;
+        window.C = C;
+        window.Util = Util;
+        window.IIRDesigner = IIRDesigner;
+        window.ZDomain = ZDomain;
+        window.DSPFilterLibrary = {
+            ComplexNum, C, Util, IIRDesigner, ZDomain
+        };
+        
+        // Trigger library loaded event
+        window.dispatchEvent(new CustomEvent('dspLibraryLoaded'));
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 0;
+            min-height: 600px;
+        }
+
+        .controls-panel {
+            background: #f8f9fa;
+            padding: 30px;
+            border-right: 1px solid #e9ecef;
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.95em;
+        }
+
+        .control-group input, .control-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .control-group input:focus, .control-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .range-input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .range-input input[type="range"] {
+            flex: 1;
+        }
+
+        .range-input .value {
+            min-width: 60px;
+            text-align: center;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .dual-input {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .dual-input input {
+            margin-bottom: 0;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .plots-panel {
+            padding: 30px;
+            background: white;
+        }
+
+        .plot-container {
+            margin-bottom: 30px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .plot-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .plot-canvas {
+            position: relative;
+            height: 300px;
+        }
+
+        .filter-info {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .filter-info h3 {
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+
+        .filter-info p {
+            margin: 5px 0;
+            color: #424242;
+        }
+
+        .error-message {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 0 8px 8px 0;
+            color: #c62828;
+            display: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab:hover {
+            color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls-panel {
+                border-right: none;
+                border-bottom: 1px solid #e9ecef;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Butterworth Filter Designer</h1>
+            <p>Interactive design and analysis of Butterworth digital filters</p>
+        </div>
+
+        <div class="main-content">
+            <div class="controls-panel">
+                <div class="error-message" id="errorMessage"></div>
+                
+                <div class="control-group">
+                    <label for="filterType">Filter Type</label>
+                    <select id="filterType">
+                        <option value="lowpass">Low Pass</option>
+                        <option value="highpass">High Pass</option>
+                        <option value="bandpass">Band Pass</option>
+                        <option value="bandstop">Band Stop</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="samplingFreq">Sampling Frequency (Hz)</label>
+                    <div class="range-input">
+                        <input type="range" id="samplingFreq" min="1000" max="192000" value="44100" step="1000">
+                        <span class="value" id="samplingFreqValue">44100</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label for="filterOrder">Filter Order</label>
+                    <div class="range-input">
+                        <input type="range" id="filterOrder" min="1" max="20" value="4" step="1">
+                        <span class="value" id="filterOrderValue">4</span>
+                    </div>
+                </div>
+
+                <div class="control-group" id="cutoffGroup">
+                    <label for="cutoffFreq">Cutoff Frequency (Hz)</label>
+                    <div class="range-input">
+                        <input type="range" id="cutoffFreq" min="100" max="20000" value="1000" step="100">
+                        <span class="value" id="cutoffFreqValue">1000</span>
+                    </div>
+                </div>
+
+                <div class="control-group" id="bandGroup" style="display: none;">
+                    <label>Band Frequencies (Hz)</label>
+                    <div class="dual-input">
+                        <input type="number" id="lowFreq" placeholder="Low" value="500" min="100">
+                        <input type="number" id="highFreq" placeholder="High" value="2000" min="100">
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="designFilter()">Design Filter</button>
+                    <button class="btn btn-secondary" onclick="resetControls()">Reset</button>
+                </div>
+
+                <div class="filter-info" id="filterInfo" style="display: none;">
+                    <h3>Filter Information</h3>
+                    <p id="filterSpecs"></p>
+                    <p id="filterCharacteristics"></p>
+                </div>
+            </div>
+
+            <div class="plots-panel">
+                <div class="tabs">
+                    <div class="tab active" onclick="showTab('frequency')">Frequency Response</div>
+                    <div class="tab" onclick="showTab('phase')">Phase Response</div>
+                    <div class="tab" onclick="showTab('zplane')">Z-Plane</div>
+                    <div class="tab" onclick="showTab('groupdelay')">Group Delay</div>
+                    <div class="tab" onclick="showTab('impulse')">Impulse Response</div>
+                    <div class="tab" onclick="showTab('coefficients')">Coefficients</div>
+                </div>
+
+                <div id="frequencyTab" class="tab-content active">
+                    <div class="plot-container">
+                        <div class="plot-title">Magnitude Response</div>
+                        <div class="plot-canvas">
+                            <canvas id="magnitudeChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="phaseTab" class="tab-content">
+                    <div class="plot-container">
+                        <div class="plot-title">Phase Response</div>
+                        <div class="plot-canvas">
+                            <canvas id="phaseChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="zplaneTab" class="tab-content">
+                    <div class="plot-container">
+                        <div class="plot-title">Z-Plane - Poles and Zeros</div>
+                        <div class="plot-canvas">
+                            <canvas id="zplaneChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="groupdelayTab" class="tab-content">
+                    <div class="plot-container">
+                        <div class="plot-title">Group Delay</div>
+                        <div class="plot-canvas">
+                            <canvas id="groupDelayChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="impulseTab" class="tab-content">
+                    <div class="plot-container">
+                        <div class="plot-title">Impulse Response</div>
+                        <div class="plot-canvas">
+                            <canvas id="impulseChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="coefficientsTab" class="tab-content">
+                    <div class="plot-container">
+                        <div class="plot-title">Filter Coefficients</div>
+                        <div class="plot-canvas">
+                            <canvas id="coefficientsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="loading" id="loadingIndicator" style="display: none;">
+                    <div class="spinner"></div>
+                    <div>Calculating filter response...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="./butterworth.js"></script>
+    <script>
+
+        // Global variables
+        let designer;
+        let charts = {};
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            // Wait for DSP library to be loaded
+            function initializeApp() {
+                if (window.DSPFilterLibrary) {
+                    // Initialize designer after DSP library is loaded
+                    designer = new ButterworthDesigner();
+                    initializeControls();
+                    initializeCharts();
+                    designFilter(); // Design initial filter
+                } else {
+                    // Wait for the library loaded event
+                    window.addEventListener('dspLibraryLoaded', initializeApp);
+                }
+            }
+            
+            initializeApp();
+        });
+
+        function initializeControls() {
+            // Update range input values
+            document.getElementById('samplingFreq').addEventListener('input', function() {
+                document.getElementById('samplingFreqValue').textContent = this.value;
+            });
+
+            document.getElementById('filterOrder').addEventListener('input', function() {
+                document.getElementById('filterOrderValue').textContent = this.value;
+            });
+
+            document.getElementById('cutoffFreq').addEventListener('input', function() {
+                document.getElementById('cutoffFreqValue').textContent = this.value;
+            });
+
+            // Handle filter type changes
+            document.getElementById('filterType').addEventListener('change', function() {
+                const type = this.value;
+                const cutoffGroup = document.getElementById('cutoffGroup');
+                const bandGroup = document.getElementById('bandGroup');
+                
+                if (type === 'bandpass' || type === 'bandstop') {
+                    cutoffGroup.style.display = 'none';
+                    bandGroup.style.display = 'block';
+                } else {
+                    cutoffGroup.style.display = 'block';
+                    bandGroup.style.display = 'none';
+                }
+            });
+
+            // Update cutoff frequency range based on sampling frequency
+            document.getElementById('samplingFreq').addEventListener('input', function() {
+                const fs = parseInt(this.value);
+                const nyquist = fs / 2;
+                const cutoffInput = document.getElementById('cutoffFreq');
+                cutoffInput.max = Math.floor(nyquist * 0.9);
+                
+                // Update band frequencies too
+                document.getElementById('lowFreq').max = Math.floor(nyquist * 0.9);
+                document.getElementById('highFreq').max = Math.floor(nyquist * 0.9);
+            });
+        }
+
+        function initializeCharts() {
+            // Initialize all charts with empty data
+            charts.magnitude = createChart('magnitudeChart', 'Magnitude Response', 'Frequency (Hz)', 'Magnitude (Linear)');
+            charts.phase = createChart('phaseChart', 'Phase Response', 'Frequency (Hz)', 'Phase (degrees)');
+            charts.zplane = createZPlaneChart('zplaneChart');
+            charts.groupDelay = createChart('groupDelayChart', 'Group Delay', 'Frequency (Hz)', 'Group Delay (samples)');
+            charts.impulse = createChart('impulseChart', 'Impulse Response', 'Time (samples)', 'Amplitude');
+            charts.coefficients = createCoefficientsChart('coefficientsChart');
+        }
+
+        function createChart(canvasId, title, xLabel, yLabel) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            return new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [{
+                        label: title,
+                        data: [],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    elements: {
+                        point: {
+                            radius: 0
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            title: {
+                                display: true,
+                                text: xLabel
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: yLabel
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        function createZPlaneChart(canvasId) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            return new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Unit Circle',
+                            data: [],
+                            borderColor: '#ddd',
+                            backgroundColor: 'transparent',
+                            borderWidth: 1,
+                            pointRadius: 0,
+                            showLine: true
+                        },
+                        {
+                            label: 'Zeros',
+                            data: [],
+                            borderColor: '#4caf50',
+                            backgroundColor: '#4caf50',
+                            pointRadius: 6,
+                            pointStyle: 'circle'
+                        },
+                        {
+                            label: 'Poles',
+                            data: [],
+                            borderColor: '#f44336',
+                            backgroundColor: '#f44336',
+                            pointRadius: 6,
+                            pointStyle: 'cross'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            title: {
+                                display: true,
+                                text: 'Real'
+                            },
+                            min: -1.5,
+                            max: 1.5
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Imaginary'
+                            },
+                            min: -1.5,
+                            max: 1.5
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    }
+                }
+            });
+        }
+
+        function createCoefficientsChart(canvasId) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            return new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: []
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Coefficient Index'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Value'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Global functions
+        window.designFilter = function() {
+            showLoading(true);
+            hideError();
+
+            try {
+                const filterType = document.getElementById('filterType').value;
+                const fs = parseInt(document.getElementById('samplingFreq').value);
+                const order = parseInt(document.getElementById('filterOrder').value);
+                
+                let cutoff;
+                if (filterType === 'bandpass' || filterType === 'bandstop') {
+                    const lowFreq = parseInt(document.getElementById('lowFreq').value);
+                    const highFreq = parseInt(document.getElementById('highFreq').value);
+                    if (lowFreq >= highFreq) {
+                        throw new Error('Low frequency must be less than high frequency');
+                    }
+                    cutoff = [lowFreq, highFreq];
+                } else {
+                    cutoff = parseInt(document.getElementById('cutoffFreq').value);
+                }
+
+                // Design the filter
+                const filter = designer.designFilter(filterType, cutoff, order, fs);
+                
+                // Update filter info
+                updateFilterInfo(filter);
+                
+                // Calculate and plot responses
+                plotFrequencyResponse();
+                plotPhaseResponse();
+                plotZPlane();
+                plotGroupDelay();
+                plotImpulseResponse();
+                plotCoefficients();
+                
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                showLoading(false);
+            }
+        };
+
+        function plotFrequencyResponse() {
+            const freqResponse = designer.getFrequencyResponse();
+            const plotData = PlotUtils.createMagnitudePlot(freqResponse);
+            
+            charts.magnitude.data.datasets[0].data = plotData.data;
+            charts.magnitude.update();
+        }
+
+        function plotPhaseResponse() {
+            const freqResponse = designer.getFrequencyResponse();
+            const plotData = PlotUtils.createPhasePlot(freqResponse);
+            
+            charts.phase.data.datasets[0].data = plotData.data;
+            charts.phase.update();
+        }
+
+        function plotZPlane() {
+            const polesZeros = designer.getPolesAndZeros();
+            const plotData = PlotUtils.createZPlanePlot(polesZeros);
+            
+            // Unit circle
+            charts.zplane.data.datasets[0].data = plotData.unitCircle.map(p => ({x: p.re, y: p.im}));
+            
+            // Zeros
+            charts.zplane.data.datasets[1].data = plotData.zeros;
+            
+            // Poles
+            charts.zplane.data.datasets[2].data = plotData.poles;
+            
+            charts.zplane.update();
+        }
+
+        function plotGroupDelay() {
+            const groupDelayData = designer.getGroupDelay();
+            const plotData = PlotUtils.createGroupDelayPlot(groupDelayData);
+            
+            charts.groupDelay.data.datasets[0].data = plotData.data;
+            charts.groupDelay.update();
+        }
+
+        function plotImpulseResponse() {
+            const impulseData = designer.getImpulseResponse();
+            
+            // Create data points for the line chart
+            const data = impulseData.time.map((time, index) => ({
+                x: time,
+                y: impulseData.amplitude[index]
+            }));
+            
+            charts.impulse.data.labels = impulseData.time.map(t => t.toString());
+            charts.impulse.data.datasets = [{
+                label: 'Impulse Response',
+                data: data,
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.1
+            }];
+            charts.impulse.update();
+        }
+
+        function plotCoefficients() {
+            const coeffData = designer.getCoefficients();
+            
+            // Prepare data for bar chart
+            const allCoeffs = [...coeffData.b, ...coeffData.a];
+            const labels = allCoeffs.map(c => `${c.type}[${c.index}]`);
+            const values = allCoeffs.map(c => c.value);
+            const colors = allCoeffs.map(c => c.type === 'b' ? '#667eea' : '#f44336');
+            
+            charts.coefficients.data.labels = labels;
+            charts.coefficients.data.datasets = [{
+                label: 'Filter Coefficients',
+                data: values,
+                backgroundColor: colors,
+                borderColor: colors,
+                borderWidth: 1
+            }];
+            charts.coefficients.update();
+        }
+
+        function updateFilterInfo(filter) {
+            const specs = designer.getFilterSpecs();
+            const characteristics = designer.getFilterCharacteristics();
+            
+            let specsText = `Type: ${specs.type.toUpperCase()}<br>`;
+            specsText += `Order: ${specs.order}<br>`;
+            specsText += `Sampling Frequency: ${specs.fs} Hz<br>`;
+            if (Array.isArray(specs.cutoff)) {
+                specsText += `Band: ${specs.cutoff[0]} - ${specs.cutoff[1]} Hz<br>`;
+            } else {
+                specsText += `Cutoff: ${specs.cutoff} Hz<br>`;
+            }
+            
+            let charText = '';
+            if (characteristics.minus3dbFreq) {
+                charText += `-3dB Frequency: ${characteristics.minus3dbFreq.toFixed(1)} Hz<br>`;
+            }
+            charText += `DC Gain: ${characteristics.dcGain.toFixed(2)} dB<br>`;
+            charText += `Passband Ripple: ${characteristics.passbandRipple.toFixed(3)} dB`;
+            
+            document.getElementById('filterSpecs').innerHTML = specsText;
+            document.getElementById('filterCharacteristics').innerHTML = charText;
+            document.getElementById('filterInfo').style.display = 'block';
+        }
+
+        window.resetControls = function() {
+            document.getElementById('filterType').value = 'lowpass';
+            document.getElementById('samplingFreq').value = '44100';
+            document.getElementById('filterOrder').value = '4';
+            document.getElementById('cutoffFreq').value = '1000';
+            document.getElementById('lowFreq').value = '500';
+            document.getElementById('highFreq').value = '2000';
+            
+            // Update display values
+            document.getElementById('samplingFreqValue').textContent = '44100';
+            document.getElementById('filterOrderValue').textContent = '4';
+            document.getElementById('cutoffFreqValue').textContent = '1000';
+            
+            // Hide band group
+            document.getElementById('bandGroup').style.display = 'none';
+            document.getElementById('cutoffGroup').style.display = 'block';
+            
+            hideError();
+            document.getElementById('filterInfo').style.display = 'none';
+        };
+
+        window.showTab = function(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            event.target.classList.add('active');
+        };
+
+        function showLoading(show) {
+            document.getElementById('loadingIndicator').style.display = show ? 'block' : 'none';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Butterworth Filter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .debug-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .debug-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-container">
+        <h1>Debug Butterworth Filter</h1>
+        <p>This page helps debug the Butterworth filter implementation.</p>
+        
+        <button onclick="runDebug()">Run Debug Test</button>
+        <button onclick="clearDebug()">Clear Results</button>
+        
+        <div id="debugResults"></div>
+    </div>
+
+    <script src="../../lib/dsp-filter-library.min.js"></script>
+    <script src="./butterworth.js"></script>
+    <script>
+
+        const designer = new ButterworthDesigner();
+        const resultsDiv = document.getElementById('debugResults');
+
+        function addDebugResult(title, data) {
+            const div = document.createElement('div');
+            div.className = 'debug-result';
+            div.innerHTML = `<h3>${title}</h3><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            resultsDiv.appendChild(div);
+        }
+
+        function clearDebug() {
+            resultsDiv.innerHTML = '';
+        }
+
+        async function runDebug() {
+            clearDebug();
+            addDebugResult('Debug Test Started', { timestamp: new Date().toISOString() });
+
+            try {
+                // Test 1: Design a simple filter
+                addDebugResult('Step 1: Designing Filter', { type: 'lowpass', cutoff: 1000, order: 2, fs: 44100 });
+                const filter = designer.designFilter('lowpass', 1000, 2, 44100);
+                addDebugResult('Step 1 Result: Filter Coefficients', {
+                    b: filter.b,
+                    a: filter.a,
+                    sections: filter.sections
+                });
+
+                // Test 2: Get frequency response
+                addDebugResult('Step 2: Getting Frequency Response', { N: 8 });
+                const freqResponse = designer.getFrequencyResponse(8);
+                addDebugResult('Step 2 Result: Frequency Response Structure', {
+                    frequencies: freqResponse.frequencies,
+                    magnitude: freqResponse.magnitude,
+                    phase: freqResponse.phase,
+                    complexLength: freqResponse.complex ? freqResponse.complex.length : 'undefined'
+                });
+
+                // Test 3: Check complex numbers
+                if (freqResponse.complex && freqResponse.complex.length > 0) {
+                    addDebugResult('Step 3: Complex Number Structure', {
+                        firstComplex: freqResponse.complex[0],
+                        hasRe: 're' in freqResponse.complex[0],
+                        hasIm: 'im' in freqResponse.complex[0],
+                        reValue: freqResponse.complex[0].re,
+                        imValue: freqResponse.complex[0].im
+                    });
+                }
+
+                // Test 4: Get group delay
+                addDebugResult('Step 4: Getting Group Delay', { N: 8 });
+                const groupDelayData = designer.getGroupDelay(8);
+                addDebugResult('Step 4 Result: Group Delay Structure', {
+                    frequencies: groupDelayData.frequencies,
+                    groupDelay: groupDelayData.groupDelay,
+                    groupDelayLength: groupDelayData.groupDelay ? groupDelayData.groupDelay.length : 'undefined'
+                });
+
+                // Test 5: Get poles and zeros
+                addDebugResult('Step 5: Getting Poles and Zeros', {});
+                const polesZeros = designer.getPolesAndZeros();
+                addDebugResult('Step 5 Result: Poles and Zeros', {
+                    zerosCount: polesZeros.zeros.length,
+                    polesCount: polesZeros.poles.length,
+                    unitCircleCount: polesZeros.unitCircle.length,
+                    firstZero: polesZeros.zeros[0],
+                    firstPole: polesZeros.poles[0]
+                });
+
+                addDebugResult('Debug Test Completed Successfully', { 
+                    status: 'SUCCESS',
+                    timestamp: new Date().toISOString()
+                });
+
+            } catch (error) {
+                addDebugResult('Debug Test Failed', {
+                    error: error.message,
+                    stack: error.stack,
+                    timestamp: new Date().toISOString()
+                });
+                console.error('Debug error:', error);
+            }
+        }
+
+        // Make functions available globally
+        window.runDebug = runDebug;
+        window.clearDebug = clearDebug;
+    </script>
+</body>
+</html>
