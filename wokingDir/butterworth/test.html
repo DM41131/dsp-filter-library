@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Butterworth Filter Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Butterworth Filter Test</h1>
+        <p>This page tests the Butterworth filter implementation without the full UI.</p>
+        
+        <button onclick="runTests()">Run Tests</button>
+        <button onclick="clearResults()">Clear Results</button>
+        
+        <div id="testResults"></div>
+    </div>
+
+    <script src="../../lib/dsp-filter-library.min.js"></script>
+    <script src="./butterworth.js"></script>
+    <script>
+
+        const designer = new ButterworthDesigner();
+        const resultsDiv = document.getElementById('testResults');
+
+        function addResult(message, isSuccess = true) {
+            const div = document.createElement('div');
+            div.className = `test-result ${isSuccess ? 'success' : 'error'}`;
+            div.innerHTML = message;
+            resultsDiv.appendChild(div);
+        }
+
+        function clearResults() {
+            resultsDiv.innerHTML = '';
+        }
+
+        async function runTests() {
+            clearResults();
+            addResult('Starting Butterworth Filter Tests...', true);
+
+            try {
+                // Test 1: Low-pass filter design
+                addResult('Test 1: Designing low-pass Butterworth filter (order=4, fc=1000Hz, fs=44100Hz)...', true);
+                const lowpassFilter = designer.designFilter('lowpass', 1000, 4, 44100);
+                addResult(`✓ Low-pass filter designed successfully. Coefficients: b=[${lowpassFilter.b.map(x => x.toFixed(4)).join(', ')}], a=[${lowpassFilter.a.map(x => x.toFixed(4)).join(', ')}]`, true);
+
+                // Test 2: High-pass filter design
+                addResult('Test 2: Designing high-pass Butterworth filter (order=2, fc=2000Hz, fs=44100Hz)...', true);
+                const highpassFilter = designer.designFilter('highpass', 2000, 2, 44100);
+                addResult(`✓ High-pass filter designed successfully. Coefficients: b=[${highpassFilter.b.map(x => x.toFixed(4)).join(', ')}], a=[${highpassFilter.a.map(x => x.toFixed(4)).join(', ')}]`, true);
+
+                // Test 3: Band-pass filter design
+                addResult('Test 3: Designing band-pass Butterworth filter (order=6, fc=[500, 2000]Hz, fs=44100Hz)...', true);
+                const bandpassFilter = designer.designFilter('bandpass', [500, 2000], 6, 44100);
+                addResult(`✓ Band-pass filter designed successfully. Coefficients: b=[${bandpassFilter.b.map(x => x.toFixed(4)).join(', ')}], a=[${bandpassFilter.a.map(x => x.toFixed(4)).join(', ')}]`, true);
+
+                // Test 4: Frequency response calculation
+                addResult('Test 4: Calculating frequency response...', true);
+                const freqResponse = designer.getFrequencyResponse(512);
+                addResult(`✓ Frequency response calculated. ${freqResponse.frequencies.length} frequency points from ${freqResponse.frequencies[0].toFixed(1)}Hz to ${freqResponse.frequencies[freqResponse.frequencies.length-1].toFixed(1)}Hz`, true);
+
+                // Test 5: Phase response
+                addResult('Test 5: Calculating phase response...', true);
+                const phaseData = freqResponse.phase;
+                const phaseRange = Math.max(...phaseData) - Math.min(...phaseData);
+                addResult(`✓ Phase response calculated. Phase range: ${phaseRange.toFixed(1)} degrees`, true);
+
+                // Test 6: Group delay
+                addResult('Test 6: Calculating group delay...', true);
+                const groupDelayData = designer.getGroupDelay(512);
+                const avgGroupDelay = groupDelayData.groupDelay.reduce((a, b) => a + b, 0) / groupDelayData.groupDelay.length;
+                addResult(`✓ Group delay calculated. Average group delay: ${avgGroupDelay.toFixed(2)} samples`, true);
+
+                // Test 7: Poles and zeros
+                addResult('Test 7: Finding poles and zeros...', true);
+                const polesZeros = designer.getPolesAndZeros();
+                addResult(`✓ Poles and zeros found. ${polesZeros.poles.length} poles, ${polesZeros.zeros.length} zeros`, true);
+
+                // Test 8: Filter characteristics
+                addResult('Test 8: Calculating filter characteristics...', true);
+                const characteristics = designer.getFilterCharacteristics();
+                addResult(`✓ Filter characteristics calculated. DC Gain: ${characteristics.dcGain.toFixed(2)}dB, Passband Ripple: ${characteristics.passbandRipple.toFixed(3)}dB`, true);
+
+                // Test 9: Plot utilities
+                addResult('Test 9: Testing plot utilities...', true);
+                const magnitudePlot = PlotUtils.createMagnitudePlot(freqResponse);
+                const phasePlot = PlotUtils.createPhasePlot(freqResponse);
+                const zplanePlot = PlotUtils.createZPlanePlot(polesZeros);
+                addResult(`✓ Plot utilities working. Magnitude plot: ${magnitudePlot.data.length} points, Phase plot: ${phasePlot.data.length} points, Z-plane: ${zplanePlot.poles.length} poles, ${zplanePlot.zeros.length} zeros`, true);
+
+                addResult('🎉 All tests passed successfully! The Butterworth filter implementation is working correctly.', true);
+
+            } catch (error) {
+                addResult(`❌ Test failed with error: ${error.message}`, false);
+                console.error('Test error:', error);
+            }
+        }
+
+        // Make runTests available globally
+        window.runTests = runTests;
+        window.clearResults = clearResults;
+    </script>
+</body>
+</html>

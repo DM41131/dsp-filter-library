@@ -8,8 +8,17 @@ export { Util } from './utils.js';
 export { FFT } from './fft.js';
 export { Window } from './windows.js';
 export { Kernels, FIRDesigner } from './fir.js';
-export { Bilinear, IIRDesigner } from './iir.js';
+export { IIRDesigner } from './iir.js';
 export { ZDomain } from './zdomain.js';
+
+// Individual filter classes
+export { ButterworthFilter } from './butterworth-filter.js';
+export { ChebyshevFilter } from './chebyshev-filter.js';
+export { ChebyshevType2Filter } from './chebyshev-type2-filter.js';
+export { LinkwitzRileyFilter } from './linkwitz-riley-filter.js';
+export { EllipticFilter } from './elliptic-filter.js';
+export { BesselFilter } from './bessel-filter.js';
+export { BaseIIRFilter } from './base-iir-filter.js';
 
 // Main Filter class
 export { Filter } from './filter-class.js';
@@ -20,9 +29,16 @@ import { Util } from './utils.js';
 import { FFT } from './fft.js';
 import { Window } from './windows.js';
 import { Kernels, FIRDesigner } from './fir.js';
-import { Bilinear, IIRDesigner } from './iir.js';
+import { IIRDesigner } from './iir.js';
 import { ZDomain } from './zdomain.js';
 import { Filter } from './filter-class.js';
+import { ButterworthFilter } from './butterworth-filter.js';
+import { ChebyshevFilter } from './chebyshev-filter.js';
+import { ChebyshevType2Filter } from './chebyshev-type2-filter.js';
+import { LinkwitzRileyFilter } from './linkwitz-riley-filter.js';
+import { EllipticFilter } from './elliptic-filter.js';
+import { BesselFilter } from './bessel-filter.js';
+import { BaseIIRFilter } from './base-iir-filter.js';
 
 // Backward compatibility namespaces
 export const FIR = {
@@ -71,8 +87,10 @@ export default {
     // Core classes
     ComplexNum, C,
     Util, FFT, Window, Kernels,
-    FIRDesigner, IIRDesigner, Bilinear,
+    FIRDesigner, IIRDesigner,
     ZDomain, Filter,
+    // Individual filter classes
+    ButterworthFilter, ChebyshevFilter, ChebyshevType2Filter, LinkwitzRileyFilter, EllipticFilter, BesselFilter, BaseIIRFilter,
     // Backward compatibility
     FIR, IIR, Z,
 };

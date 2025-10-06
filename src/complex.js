@@ -60,6 +60,35 @@ export class ComplexNum {
     static expj(theta) { 
         return { re: Math.cos(theta), im: Math.sin(theta) }; 
     }
+    
+    /** @returns {Complex} */ 
+    static pow(a, n) {
+        if (n === 0) return { re: 1, im: 0 };
+        if (n === 1) return a;
+        if (n === -1) return C.div({ re: 1, im: 0 }, a);
+        
+        if (n > 0) {
+            let result = { re: 1, im: 0 };
+            for (let i = 0; i < n; i++) {
+                result = C.mul(result, a);
+            }
+            return result;
+        } else {
+            // For negative powers, use 1/a^n
+            let result = { re: 1, im: 0 };
+            for (let i = 0; i < -n; i++) {
+                result = C.mul(result, a);
+            }
+            return C.div({ re: 1, im: 0 }, result);
+        }
+    }
+    
+    /** @returns {Complex} */ 
+    static sqrt(a) {
+        const r = Math.sqrt(C.abs(a));
+        const theta = Math.atan2(a.im, a.re) / 2;
+        return { re: r * Math.cos(theta), im: r * Math.sin(theta) };
+    }
 }
 
 // Legacy alias for backward compatibility
