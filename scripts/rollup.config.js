@@ -8,14 +8,21 @@ import terser from '@rollup/plugin-terser';
 
 const input = {
   'index': 'src/index.js',
-  'complex': 'src/complex.js',
-  'utils': 'src/utils.js',
-  'fft': 'src/fft.js',
-  'windows': 'src/windows.js',
-  'fir': 'src/fir.js',
-  'iir': 'src/iir.js',
-  'zdomain': 'src/zdomain.js',
-  'filter': 'src/filter-class.js'
+  'dsp-filter-library': 'src/dsp-filter-library.js',
+  'core/Complex': 'src/core/Complex.js',
+  'core/util': 'src/core/util.js',
+  'core/Polynomial': 'src/core/Polynomial.js',
+  'core/Roots': 'src/core/Roots.js',
+  'analog/Prototypes': 'src/analog/Prototypes.js',
+  'digital/BLT': 'src/digital/BLT.js',
+  'digital/SOS': 'src/digital/SOS.js',
+  'digital/Response': 'src/digital/Response.js',
+  'fir/Windows': 'src/fir/Windows.js',
+  'fir/FIRDesigner': 'src/fir/FIRDesigner.js',
+  'fir/FIRZeros': 'src/fir/FIRZeros.js',
+  'iir/IIRDesigner': 'src/iir/IIRDesigner.js',
+  'model/FIRFilter': 'src/model/FIRFilter.js',
+  'model/IIRFilter': 'src/model/IIRFilter.js'
 };
 
 const external = [];

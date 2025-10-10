@@ -1,207 +1,192 @@
-// types.d.ts — TypeScript type definitions for DSP Filter Library
+// TypeScript definitions for DSP Filter Library
 // Author: Davit Akobia <dav.akobia@gmail.com>
 // License: MIT
 
+// Core types
 export interface Complex {
   re: number;
   im: number;
 }
 
-export interface FreqResponse {
-  w: number[];
-  H: Complex[];
-  mag: number[];
-  phase: number[];
-}
+export interface ComplexArray extends Array<Complex> {}
 
-export interface TF {
-  b: number[];
-  a: number[];
-}
-
-export type FiltKind = "lowpass" | "highpass" | "bandpass" | "bandstop";
-
-export interface Biquad {
-  b: number[];
-  a: [number, number, number];
-}
-
-export interface FilterOptions {
-  beta?: number;
-  alpha?: number;
-  sigma?: number;
-}
-
-export interface FrequencyResponseResult {
-  f: number[];
-  mag: number[];
-  phase: number[];
-  H: Complex[];
-}
-
-export interface GroupDelayResult {
-  w: number[];
-  gd: number[];
-}
+// Core utilities
+export declare const TAU: number;
+export declare function linspace(a: number, b: number, n: number): number[];
+export declare function unwrapPhase(phRad: number[]): number[];
 
 // Complex number operations
-export declare class ComplexNum {
-  static of(re?: number, im?: number): Complex;
+export declare class Cx {
   static add(a: Complex, b: Complex): Complex;
   static sub(a: Complex, b: Complex): Complex;
   static mul(a: Complex, b: Complex): Complex;
-  static scale(a: Complex, s: number): Complex;
-  static conj(a: Complex): Complex;
   static div(a: Complex, b: Complex): Complex;
   static abs(a: Complex): number;
-  static arg(a: Complex): number;
-  static expj(theta: number): Complex;
+  static conj(a: Complex): Complex;
 }
 
-export declare const C: typeof ComplexNum;
-
-// Utility functions
-export declare class Util {
-  static nextPow2(n: number): number;
-  static clamp(v: number, lo: number, hi: number): number;
-  static linspace(start: number, end: number, n: number): number[];
-  static polyval(c: number[], z: number | Complex): number | Complex;
-  static convolve(x: number[], h: number[]): number[];
-  static polymul(a: number[], b: number[]): number[];
-  static polyfromroots(roots: Complex[]): number[];
+// Polynomial operations
+export declare class Poly {
+  static evalRealAsc(coeffs: number[], z: Complex): Complex;
 }
 
-// FFT operations
-export declare class FFT {
-  static fft(x: Complex[]): Complex[];
-  static ifft(X: Complex[]): Complex[];
-  static rfft(x: number[]): Complex[];
-  static powerSpectrum(x: number[]): number[];
+// Root finding
+export declare class Roots {
+  static aberthMonic(raw: number[]): Complex[];
+  static dkScaled(raw: number[]): Complex[];
+}
+
+// Analog prototypes
+export interface PrototypeResult {
+  poles: Complex[];
+  zeros: Complex[];
+  family?: string;
+  order?: number;
+  enforcedOrder?: number;
+}
+
+export declare class Prototypes {
+  static butter(N: number): PrototypeResult;
+  static cheby1(N: number, Rp: number): PrototypeResult;
+  static cheby2(N: number, Rs: number): PrototypeResult;
+  static ellipHybrid(N: number, Rp: number, Rs: number): PrototypeResult;
+  static linkwitzRiley(N: number): PrototypeResult;
+  static bessel(N: number): PrototypeResult;
+}
+
+// Bilinear Transform
+export declare class BLT {
+  static prewarp(f: number, Fs: number): number;
+  static sToZ(s: Complex, Fs: number): Complex;
+  static quad(a: Complex, b: Complex, c: Complex): [Complex, Complex];
+}
+
+// Second Order Sections
+export interface SOSSection {
+  b: [number, number, number];
+  a: [number, number, number];
+}
+
+export declare class SOS {
+  static fromZPK(zZeros: Complex[], zPoles: Complex[], gain?: number): SOSSection[];
+}
+
+// Digital response calculations
+export declare class Response {
+  static H_w_IIR(sections: SOSSection[], w: number): Complex;
+  static H_w_FIR(taps: number[], w: number): Complex;
+  static magDbFromH(H: Complex): number;
+  static unwrapToDeg(phRad: number[]): number[];
+  static groupDelay(phUnwrappedRad: number[], w: number[]): number[];
+  static phaseDelay(phUnwrappedRad: number[], w: number[]): number[];
 }
 
 // Window functions
-export declare class Window {
-  static rect(N: number): number[];
-  static rectangle(N: number): number[];
-  static hann(N: number): number[];
-  static hamming(N: number): number[];
-  static blackman(N: number): number[];
-  static blackmanHarris(N: number): number[];
-  static blackmanNuttall(N: number): number[];
-  static kaiser(N: number, beta?: number): number[];
-  static tukey(N: number, alpha?: number): number[];
-  static gauss(N: number, sigma?: number): number[];
-  static bartlett(N: number): number[];
-  static bartlettHann(N: number): number[];
-  static cosine(N: number): number[];
-  static lanczos(N: number): number[];
-  static bohman(N: number): number[];
-  static flatTop(N: number): number[];
-  static byName(name: string, N: number, opts?: FilterOptions): number[];
+export declare class Windows {
+  static rect(M: number): number[];
+  static hann(M: number): number[];
+  static hamming(M: number): number[];
+  static blackman(M: number): number[];
+  static kaiser(M: number, beta: number): number[];
+  static byName(name: string, M: number, beta?: number): number[];
 }
 
-// FIR filter design
-export declare class Kernels {
-  static sinc(x: number): number;
-  static idealLowpass(fc: number, fs: number, N: number): number[];
+// FIR filter designer
+export interface FIRSpec {
+  kind: 'lowpass' | 'highpass' | 'bandpass' | 'bandstop';
+  taps: number;
+  Fs: number;
+  f1: number;
+  f2?: number;
+  window?: string;
+  beta?: number;
 }
 
 export declare class FIRDesigner {
-  static design(kind: FiltKind, cutoffHz: number | [number, number], fs: number, order: number, window?: string): TF;
-  static apply(b: number[], x: number[]): number[];
-  static overlapAdd(b: number[], x: number[], blockSize?: number): number[];
+  constructor(spec: FIRSpec);
+  design(): FIRFilter;
 }
 
-// IIR filter design
-export declare class Bilinear {
-  static prewarp(fHz: number, fs: number): number;
+// FIR filter zeros
+export declare class FIRZeros {
+  static fromTapsRobust(taps: number[]): Complex[];
+}
+
+// IIR filter designer
+export interface IIRSpec {
+  family: 'butter' | 'cheby1' | 'cheby2' | 'ellip' | 'linkwitz' | 'bessel';
+  kind: 'lowpass' | 'highpass' | 'bandpass' | 'bandstop';
+  N: number;
+  Rp?: number;
+  Rs?: number;
+  Fs: number;
+  f1: number;
+  f2?: number;
 }
 
 export declare class IIRDesigner {
-  static butterworthPoles(n: number): Complex[];
-  static cheby1Poles(n: number, rp?: number): Complex[];
-  static pairConjugates(list: Complex[]): Complex[][];
-  static bilinearBiquad(a2: number, a1: number, a0: number, kind: FiltKind, fs: number): { b: number[]; a: [number, number, number] };
-  static fromPrototype(kind: FiltKind, fs: number, poles: Complex[], normalizeAt: number): { b: number[]; a: number[]; sections: Biquad[] };
-  static butterworth(kind: FiltKind, cutoffHz: number | [number, number], fs: number, order: number): { b: number[]; a: number[]; sections: Biquad[] };
-  static cheby1(kind: FiltKind, cutoffHz: number | [number, number], fs: number, order: number, rp?: number): { b: number[]; a: number[]; sections: Biquad[] };
+  constructor(spec: IIRSpec);
+  design(): IIRFilter;
 }
 
-// Z-domain operations
-export declare class ZDomain {
-  static evalHz(b: number[], a: number[], z: Complex): Complex;
-  static freqz(b: number[], a: number[], N?: number): FreqResponse;
-  static groupDelay(b: number[], a: number[], N?: number): GroupDelayResult;
-  static isStable(): boolean;
+// Filter models
+export interface FrequencyGrid {
+  w: number[];
+  freqHz: number[];
+  magdB: number[];
+  phaseDeg: number[];
+  gdSamples: number[];
+  pdSamples: number[];
 }
 
-// Main Filter class
-export declare class Filter {
-  b: number[];
-  a: number[];
-  sections: Biquad[];
-  
-  constructor(b: number[], a?: number[], sections?: Biquad[]);
-  reset(): void;
-  processSample(x: number): number;
-  applySignal(x: number[]): number[];
-  frequencyResponse(fs: number, N?: number): FrequencyResponseResult;
-  toJSON(): TF;
-  
-  static fromTF(b: number[], a: number[]): Filter;
-  static designFIR(kind: FiltKind, cutoffHz: number | [number, number], fs: number, order: number, window?: string): Filter;
-  static designButter(kind: FiltKind, cutoffHz: number | [number, number], fs: number, order: number): Filter;
-  static designCheby1(kind: FiltKind, cutoffHz: number | [number, number], fs: number, order: number, rp?: number): Filter;
+export interface FIRFilterInit {
+  taps: number[];
+  Fs: number;
 }
 
-// Backward compatibility namespaces
-export declare const FIR: {
-  design: (kind: FiltKind, cutoffHz: number | [number, number], fs: number, order: number, window?: string) => TF;
-  apply: (b: number[], x: number[]) => number[];
-  overlapAdd: (b: number[], x: number[], blockSize?: number) => number[];
+export declare class FIRFilter {
+  constructor(init: FIRFilterInit);
+  readonly type: 'FIR';
+  readonly taps: number[];
+  readonly Fs: number;
+  impulseResponse(L?: number): number[];
+  zeros(): Complex[];
+  frequencyGrid(Nf?: number): FrequencyGrid;
+}
+
+export interface IIRFilterInit {
+  sections: SOSSection[];
+  Fs: number;
+  zPoles: Complex[];
+  zZeros: Complex[];
+}
+
+export declare class IIRFilter {
+  constructor(init: IIRFilterInit);
+  readonly type: 'IIR';
+  readonly sections: SOSSection[];
+  readonly Fs: number;
+  readonly zPoles: Complex[];
+  readonly zZeros: Complex[];
+  impulseResponse(L?: number): number[];
+  frequencyGrid(Nf?: number): FrequencyGrid;
+}
+
+// Main FilterDSP class
+export declare class FilterDSP {
+  static designFIR(spec: FIRSpec): FIRFilter;
+  static designIIR(spec: IIRSpec): IIRFilter;
+}
+
+// Re-export all types for convenience
+export type {
+  Complex,
+  ComplexArray,
+  PrototypeResult,
+  SOSSection,
+  FIRSpec,
+  IIRSpec,
+  FrequencyGrid,
+  FIRFilterInit,
+  IIRFilterInit
 };
-
-export declare const IIR: {
-  butterworth: (kind: FiltKind, cutoffHz: number | [number, number], fs: number, order: number) => TF;
-  cheby1: (kind: FiltKind, cutoffHz: number | [number, number], fs: number, order: number, rp?: number) => TF;
-  apply: (b: number[], a: number[], x: number[]) => number[];
-};
-
-export declare const Z: {
-  evalHz: (b: number[], a: number[], z: Complex) => Complex;
-  freqz: (b: number[], a: number[], N?: number) => FreqResponse;
-  groupDelay: (b: number[], a: number[], N?: number) => GroupDelayResult;
-  isStable: () => boolean;
-};
-
-export declare const FilterFactory: {
-  designFIR: typeof Filter.designFIR;
-  designButter: typeof Filter.designButter;
-  designCheby1: typeof Filter.designCheby1;
-  apply: (tf: TF, x: number[]) => number[];
-};
-
-// Utility function
-export declare function frequencyResponse(tf: TF, fs: number, N?: number): FrequencyResponseResult;
-
-// Default export
-declare const DSP: {
-  ComplexNum: typeof ComplexNum;
-  C: typeof ComplexNum;
-  Util: typeof Util;
-  FFT: typeof FFT;
-  Window: typeof Window;
-  Kernels: typeof Kernels;
-  FIRDesigner: typeof FIRDesigner;
-  IIRDesigner: typeof IIRDesigner;
-  Bilinear: typeof Bilinear;
-  ZDomain: typeof ZDomain;
-  Filter: typeof Filter;
-  FIR: typeof FIR;
-  IIR: typeof IIR;
-  Z: typeof Z;
-  FilterFactory: typeof FilterFactory;
-  frequencyResponse: typeof frequencyResponse;
-};
-
-export default DSP;

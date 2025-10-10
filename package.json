@@ -18,6 +18,11 @@
       "unpkg": "./lib/dsp-filter-library.min.js",
       "jsdelivr": "./lib/dsp-filter-library.min.js"
     },
+    "./dsp-filter-library": {
+      "import": "./lib/dsp-filter-library.js",
+      "require": "./lib/dsp-filter-library.cjs",
+      "types": "./lib/dsp-filter-library.d.ts"
+    },
     "./browser": {
       "import": "./lib/dsp-filter-library.esm.min.js",
       "require": "./lib/dsp-filter-library.min.js"
@@ -26,45 +31,75 @@
       "import": "./lib/dsp-filter-library.esm.min.js",
       "require": "./lib/dsp-filter-library.min.js"
     },
-    "./complex": {
-      "import": "./lib/complex.js",
-      "require": "./lib/complex.cjs",
-      "types": "./lib/complex.d.ts"
+    "./core/Complex": {
+      "import": "./lib/core/Complex.js",
+      "require": "./lib/core/Complex.cjs",
+      "types": "./lib/core/Complex.d.ts"
     },
-    "./fft": {
-      "import": "./lib/fft.js",
-      "require": "./lib/fft.cjs",
-      "types": "./lib/fft.d.ts"
+    "./core/util": {
+      "import": "./lib/core/util.js",
+      "require": "./lib/core/util.cjs",
+      "types": "./lib/core/util.d.ts"
     },
-    "./fir": {
-      "import": "./lib/fir.js",
-      "require": "./lib/fir.cjs",
-      "types": "./lib/fir.d.ts"
+    "./core/Polynomial": {
+      "import": "./lib/core/Polynomial.js",
+      "require": "./lib/core/Polynomial.cjs",
+      "types": "./lib/core/Polynomial.d.ts"
     },
-    "./iir": {
-      "import": "./lib/iir.js",
-      "require": "./lib/iir.cjs",
-      "types": "./lib/iir.d.ts"
+    "./core/Roots": {
+      "import": "./lib/core/Roots.js",
+      "require": "./lib/core/Roots.cjs",
+      "types": "./lib/core/Roots.d.ts"
     },
-    "./filter": {
-      "import": "./lib/filter.js",
-      "require": "./lib/filter.cjs",
-      "types": "./lib/filter.d.ts"
+    "./analog/Prototypes": {
+      "import": "./lib/analog/Prototypes.js",
+      "require": "./lib/analog/Prototypes.cjs",
+      "types": "./lib/analog/Prototypes.d.ts"
     },
-    "./windows": {
-      "import": "./lib/windows.js",
-      "require": "./lib/windows.cjs",
-      "types": "./lib/windows.d.ts"
+    "./digital/BLT": {
+      "import": "./lib/digital/BLT.js",
+      "require": "./lib/digital/BLT.cjs",
+      "types": "./lib/digital/BLT.d.ts"
     },
-    "./utils": {
-      "import": "./lib/utils.js",
-      "require": "./lib/utils.cjs",
-      "types": "./lib/utils.d.ts"
+    "./digital/SOS": {
+      "import": "./lib/digital/SOS.js",
+      "require": "./lib/digital/SOS.cjs",
+      "types": "./lib/digital/SOS.d.ts"
     },
-    "./zdomain": {
-      "import": "./lib/zdomain.js",
-      "require": "./lib/zdomain.cjs",
-      "types": "./lib/zdomain.d.ts"
+    "./digital/Response": {
+      "import": "./lib/digital/Response.js",
+      "require": "./lib/digital/Response.cjs",
+      "types": "./lib/digital/Response.d.ts"
+    },
+    "./fir/Windows": {
+      "import": "./lib/fir/Windows.js",
+      "require": "./lib/fir/Windows.cjs",
+      "types": "./lib/fir/Windows.d.ts"
+    },
+    "./fir/FIRDesigner": {
+      "import": "./lib/fir/FIRDesigner.js",
+      "require": "./lib/fir/FIRDesigner.cjs",
+      "types": "./lib/fir/FIRDesigner.d.ts"
+    },
+    "./fir/FIRZeros": {
+      "import": "./lib/fir/FIRZeros.js",
+      "require": "./lib/fir/FIRZeros.cjs",
+      "types": "./lib/fir/FIRZeros.d.ts"
+    },
+    "./iir/IIRDesigner": {
+      "import": "./lib/iir/IIRDesigner.js",
+      "require": "./lib/iir/IIRDesigner.cjs",
+      "types": "./lib/iir/IIRDesigner.d.ts"
+    },
+    "./model/FIRFilter": {
+      "import": "./lib/model/FIRFilter.js",
+      "require": "./lib/model/FIRFilter.cjs",
+      "types": "./lib/model/FIRFilter.d.ts"
+    },
+    "./model/IIRFilter": {
+      "import": "./lib/model/IIRFilter.js",
+      "require": "./lib/model/IIRFilter.cjs",
+      "types": "./lib/model/IIRFilter.d.ts"
     }
   },
   "files": [
@@ -79,13 +114,13 @@
     "build": "npm run clean && npm run build:esm && npm run build:cjs && npm run build:types",
     "build:esm": "rollup -c scripts/rollup.config.js --format es",
     "build:cjs": "rollup -c scripts/rollup.config.js --format cjs",
-    "build:types": "copy src\\types.d.ts lib\\index.d.ts",
+    "build:types": "tsc --declaration --emitDeclarationOnly --outDir lib",
     "build:min": "npm run clean && rollup -c scripts/rollup.config.js",
     "build:all": "npm run build && npm run build:min",
     "prepublishOnly": "npm run build:all",
     "test": "node examples/test/example.js",
-    "lint": "eslint src/*.js",
-    "lint:fix": "eslint src/*.js --fix",
+    "lint": "eslint src/**/*.js",
+    "lint:fix": "eslint src/**/*.js --fix",
     "clean": "rimraf lib",
     "prepack": "npm run build:all",
     "version": "npm run build:all && git add -A lib",
