@@ -5,24 +5,91 @@
 <title>Filter DSP JS Library Test</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
-  :root { --bg:#0b0f14; --fg:#e6f0ff; --muted:#9bb0c8; --accent:#6bdcff; --grid:#1b2330; }
+  :root { 
+    --bg:#0a0e13; --fg:#f0f4f8; --muted:#94a3b8; --accent:#3b82f6; --grid:#1e293b; 
+    --surface:#111827; --border:#374151; --hover:#1f2937;
+  }
   * { box-sizing: border-box; }
-  body { margin:0; background:var(--bg); color:var(--fg); font:14px/1.45 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
-  header { padding:12px 16px; border-bottom:1px solid var(--grid); display:flex; gap:14px; align-items:end; flex-wrap:wrap; }
-  h1 { font-size:16px; margin:0; color:var(--accent); font-weight:600; }
-  .row { display:flex; gap:10px; flex-wrap:wrap; align-items:end; }
-  .field { display:flex; flex-direction:column; gap:6px; }
-  .field label { font-size:12px; color:var(--muted); }
-  .field input, .field select { background:#0e141d; border:1px solid var(--grid); color:var(--fg); padding:8px 10px; border-radius:10px; min-width:110px; }
-  .field input[type="range"] { width:150px; height:6px; background:#1b2330; border-radius:3px; outline:none; -webkit-appearance:none; appearance:none; }
-  .field input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; background:#6bdcff; border-radius:50%; cursor:pointer; }
-  .slider-value { font-size:11px; color:var(--accent); margin-top:2px; text-align:center; }
-  main { padding:10px; }
-  .card { background:#0d141e; border:1px solid var(--grid); border-radius:14px; padding:10px; display:flex; flex-direction:column; min-height:400px; }
-  .card h3 { margin:0 0 8px 2px; font-size:13px; color:var(--muted); font-weight:600; }
+  body { 
+    margin:0; background:var(--bg); color:var(--fg); 
+    font:14px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-weight:400;
+  }
+  header { 
+    padding:20px 24px; border-bottom:1px solid var(--border); 
+    background:var(--surface); backdrop-filter:blur(10px);
+    box-shadow:0 1px 3px rgba(0,0,0,0.1);
+  }
+  h1 { font-size:18px; margin:0; color:var(--accent); font-weight:600; }
+  .row { 
+    display:flex; gap:16px; flex-wrap:wrap; align-items:end; 
+    max-width:1400px; margin:0 auto;
+  }
+  .field { 
+    display:flex; flex-direction:column; gap:8px; 
+    min-width:140px; position:relative;
+  }
+  .field label { 
+    font-size:12px; color:var(--muted); font-weight:500; 
+    text-transform:uppercase; letter-spacing:0.5px;
+  }
+  .field input, .field select { 
+    background:var(--surface); border:1px solid var(--border); 
+    color:var(--fg); padding:10px 12px; border-radius:8px; 
+    min-width:140px; font-size:13px; transition:all 0.2s ease;
+    box-shadow:0 1px 2px rgba(0,0,0,0.05);
+  }
+  .field input:focus, .field select:focus { 
+    outline:none; border-color:var(--accent); 
+    box-shadow:0 0 0 3px rgba(59,130,246,0.1);
+  }
+  .field input:hover, .field select:hover {
+    border-color:var(--hover); background:var(--hover);
+  }
+  .field input[type="range"] { 
+    width:160px; height:8px; background:var(--grid); 
+    border-radius:4px; outline:none; -webkit-appearance:none; 
+    appearance:none; border:none; padding:0;
+  }
+  .field input[type="range"]::-webkit-slider-thumb { 
+    -webkit-appearance:none; width:20px; height:20px; 
+    background:linear-gradient(135deg, var(--accent), #1d4ed8);
+    border-radius:50%; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.2);
+    transition:transform 0.2s ease;
+  }
+  .field input[type="range"]::-webkit-slider-thumb:hover {
+    transform:scale(1.1);
+  }
+  .field input[type="range"]::-moz-range-thumb {
+    width:20px; height:20px; background:linear-gradient(135deg, var(--accent), #1d4ed8);
+    border-radius:50%; cursor:pointer; border:none; box-shadow:0 2px 4px rgba(0,0,0,0.2);
+  }
+  .slider-value { 
+    font-size:12px; color:var(--accent); margin-top:4px; 
+    text-align:center; font-weight:600; background:rgba(59,130,246,0.1);
+    padding:2px 6px; border-radius:4px; display:inline-block;
+  }
+  main { padding:20px; max-width:1400px; margin:0 auto; }
+  .card { 
+    background:var(--surface); border:1px solid var(--border); 
+    border-radius:12px; padding:20px; display:flex; flex-direction:column; 
+    min-height:400px; box-shadow:0 1px 3px rgba(0,0,0,0.1);
+    transition:box-shadow 0.2s ease;
+  }
+  .card:hover { box-shadow:0 4px 6px rgba(0,0,0,0.1); }
+  .card h3 { 
+    margin:0 0 12px 0; font-size:14px; color:var(--muted); 
+    font-weight:600; text-transform:uppercase; letter-spacing:0.5px;
+  }
   canvas { width:100%; height:360px; display:block; }
   .sos { grid-column:1 / -1; }
-  pre { margin:0; white-space:pre-wrap; word-break:break-word; background:#0a1018; border:1px solid var(--grid); border-radius:10px; padding:10px; color:#d7e6ff; }
+  pre { 
+    margin:0; white-space:pre-wrap; word-break:break-word; 
+    background:var(--bg); border:1px solid var(--border); 
+    border-radius:8px; padding:16px; color:var(--fg); 
+    font-family:'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+    font-size:12px; line-height:1.5; overflow-x:auto;
+  }
   footer { padding:8px 14px; color:var(--muted); border-top:1px solid var(--grid); font-size:12px; }
   a { color:var(--accent); text-decoration:none; }
   .status { padding:8px 12px; background:#1a2330; border:1px solid var(--grid); border-radius:8px; margin:8px 0; font-size:12px; }
@@ -30,30 +97,36 @@
   .status.error { border-color:#f87171; color:#f87171; }
   
   /* Tab styles */
-  .tabs { margin:10px 0; }
-  .tab-buttons { display:flex; gap:4px; margin-bottom:10px; }
+  .tabs { margin:20px 0; }
+  .tab-buttons { 
+    display:flex; gap:2px; margin-bottom:0; 
+    background:var(--surface); padding:4px; border-radius:8px;
+    border:1px solid var(--border);
+  }
   .tab-button { 
-    background:#0d141e; border:1px solid var(--grid); color:var(--muted); 
-    padding:8px 16px; border-radius:8px 8px 0 0; cursor:pointer; 
-    font-size:12px; transition:all 0.2s ease;
+    background:transparent; border:none; color:var(--muted); 
+    padding:10px 20px; border-radius:6px; cursor:pointer; 
+    font-size:13px; font-weight:500; transition:all 0.2s ease;
+    flex:1; text-align:center;
   }
   .tab-button.active { 
-    background:#1a2330; border-bottom-color:#1a2330; color:var(--accent); 
-    border-bottom:1px solid #1a2330; margin-bottom:-1px;
+    background:var(--accent); color:white; 
+    box-shadow:0 2px 4px rgba(59,130,246,0.3);
   }
-  .tab-button:hover:not(.active) { background:#1a2330; color:var(--fg); }
+  .tab-button:hover:not(.active) { 
+    background:var(--hover); color:var(--fg); 
+  }
   .tab-content { display:none; }
   .tab-content.active { display:block; }
   .tab-panel { 
-    background:#0d141e; border:1px solid var(--grid); border-radius:0 8px 8px 8px; 
-    padding:15px; min-height:400px;
+    background:var(--surface); border:1px solid var(--border); 
+    border-radius:8px; padding:20px; min-height:400px;
+    margin-top:8px; box-shadow:0 1px 3px rgba(0,0,0,0.1);
   }
 </style>
 </head>
 <body>
   <header>
-    <div>
-    </div>
     <div class="row">
       <div class="field">
         <label for="family">Family</label>
@@ -107,6 +180,24 @@
           <option value="hann">Hann</option>
           <option value="hamming" selected>Hamming</option>
           <option value="blackman">Blackman</option>
+          <option value="blackmanHarris">Blackman-Harris</option>
+          <option value="blackmanNuttall">Blackman-Nuttall</option>
+          <option value="nuttall">Nuttall</option>
+          <option value="exactBlackman">Exact Blackman</option>
+          <option value="bartlett">Bartlett</option>
+          <option value="bartlettHann">Bartlett-Hann</option>
+          <option value="welch">Welch</option>
+          <option value="triangular">Triangular</option>
+          <option value="gauss">Gaussian</option>
+          <option value="tukey">Tukey</option>
+          <option value="poisson">Poisson</option>
+          <option value="parzen">Parzen</option>
+          <option value="bohman">Bohman</option>
+          <option value="lanczos">Lanczos</option>
+          <option value="cosine">Cosine</option>
+          <option value="flatTop">Flat-top</option>
+          <option value="dolphChebyshev">Dolph-Chebyshev</option>
+          <option value="taylor">Taylor</option>
           <option value="kaiser">Kaiser</option>
         </select>
       </div>
@@ -114,6 +205,21 @@
         <label for="beta">Kaiser β</label>
         <input id="beta" type="range" min="0" max="12" step="0.1" value="6" />
         <div id="beta-value" class="slider-value">6.0</div>
+      </div>
+      <div class="field only-fir only-tukey" style="display:none">
+        <label for="alpha">Tukey α</label>
+        <input id="alpha" type="range" min="0" max="1" step="0.05" value="0.5" />
+        <div id="alpha-value" class="slider-value">0.5</div>
+      </div>
+      <div class="field only-fir only-gauss" style="display:none">
+        <label for="sigma">Gaussian σ</label>
+        <input id="sigma" type="range" min="0.1" max="1" step="0.05" value="0.4" />
+        <div id="sigma-value" class="slider-value">0.4</div>
+      </div>
+      <div class="field only-fir only-poisson" style="display:none">
+        <label for="poissonAlpha">Poisson α</label>
+        <input id="poissonAlpha" type="range" min="0.5" max="5" step="0.1" value="2" />
+        <div id="poissonAlpha-value" class="slider-value">2.0</div>
       </div>
 
       <div class="field">
@@ -255,11 +361,11 @@
     const $ = id => document.getElementById(id);
     const familyEl = $('family'), kindEl = $('kind'), orderEl = $('order'), tapsEl = $('taps'),
           rpEl = $('rp'), rsEl = $('rs'), fsEl = $('fs'), fcEl = $('fc'), f1El = $('f1'), f2El = $('f2'),
-          winEl = $('win'), betaEl = $('beta');
+          winEl = $('win'), betaEl = $('beta'), alphaEl = $('alpha'), sigmaEl = $('sigma'), poissonAlphaEl = $('poissonAlpha');
     const orderVal = $('order-value'), tapsVal = $('taps-value'),
           rpVal = $('rp-value'), rsVal = $('rs-value'),
           fsVal = $('fs-value'), fcVal = $('fc-value'), f1Val = $('f1-value'), f2Val = $('f2-value'),
-          betaVal = $('beta-value');
+          betaVal = $('beta-value'), alphaVal = $('alpha-value'), sigmaVal = $('sigma-value'), poissonAlphaVal = $('poissonAlpha-value');
     const magCv = $('magCanvas'), phaseCv = $('phaseCanvas'), impCv = $('impCanvas'),
           gdCv = $('gdCanvas'), pdCv = $('pdCanvas'), pzCv = $('pzCanvas'), sosOut = $('sosOut');
 
@@ -277,6 +383,9 @@
       document.querySelectorAll('.only-lp-hp').forEach(el => el.style.display = (k === 'lowpass' || k === 'highpass') ? '' : 'none');
       document.querySelectorAll('.only-bp-bs').forEach(el => el.style.display = (k === 'bandpass' || k === 'bandstop') ? '' : 'none');
       document.querySelectorAll('.only-kaiser').forEach(el => el.style.display = (isFIR && winEl.value === 'kaiser') ? '' : 'none');
+      document.querySelectorAll('.only-tukey').forEach(el => el.style.display = (isFIR && winEl.value === 'tukey') ? '' : 'none');
+      document.querySelectorAll('.only-gauss').forEach(el => el.style.display = (isFIR && winEl.value === 'gauss') ? '' : 'none');
+      document.querySelectorAll('.only-poisson').forEach(el => el.style.display = (isFIR && winEl.value === 'poisson') ? '' : 'none');
     }
 
     function hookSlider(sl, out) {
@@ -286,7 +395,7 @@
     }
 
     // Hook up all sliders and selects
-    [orderEl, tapsEl, rpEl, rsEl, fsEl, fcEl, f1El, f2El, betaEl].forEach(sl => {
+    [orderEl, tapsEl, rpEl, rsEl, fsEl, fcEl, f1El, f2El, betaEl, alphaEl, sigmaEl, poissonAlphaEl].forEach(sl => {
       if (sl) hookSlider(sl, document.getElementById(sl.id + '-value'));
     });
     
@@ -613,6 +722,9 @@
           const taps = parseInt(tapsEl.value);
           const window = winEl.value;
           const beta = parseFloat(betaEl.value);
+          const alpha = parseFloat(alphaEl.value);
+          const sigma = parseFloat(sigmaEl.value);
+          const poissonAlpha = parseFloat(poissonAlphaEl.value);
           
           let f1, f2;
           if (kind === 'lowpass' || kind === 'highpass') {
@@ -623,7 +735,7 @@
             f2 = parseFloat(f2El.value);
           }
           
-          const spec = { kind, taps, Fs, f1, f2, window, beta };
+          const spec = { kind, taps, Fs, f1, f2, window, beta, alpha, sigma, poissonAlpha };
           filter = FilterDSPClass.designFIR(spec);
         } else {
           const N = parseInt(orderEl.value);
@@ -801,9 +913,7 @@
           });
         } else {
           output = '// FIR Filter - Taps\n';
-          output += `taps = [${filter.taps.slice(0, 20).map(x => x.toFixed(6)).join(', ')}`;
-          if (filter.taps.length > 20) output += `, ... (${filter.taps.length - 20} more)`;
-          output += '];\n';
+          output += `taps = [${filter.taps.map(x => x.toFixed(6)).join(', ')}];\n`;
         }
         sosOut.textContent = output;
         
