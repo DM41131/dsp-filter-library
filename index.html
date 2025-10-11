@@ -1,2537 +1,978 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DSP Filter Library - Advanced Demonstration</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script
-        src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            font-weight: 300;
-        }
-
-        .header p {
-            font-size: 1.1em;
-            opacity: 0.9;
-        }
-
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 0;
-            min-height: 600px;
-        }
-
-        .controls-panel {
-            background: #f8f9fa;
-            padding: 30px;
-            border-right: 1px solid #e9ecef;
-        }
-
-        .control-group {
-            margin-bottom: 25px;
-        }
-
-        .control-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #2c3e50;
-            font-size: 0.95em;
-        }
-
-        .control-group input,
-        .control-group select {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            font-size: 1em;
-            transition: border-color 0.3s ease;
-        }
-
-        .control-group input:focus,
-        .control-group select:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .range-input {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .range-input input[type="range"] {
-            flex: 1;
-        }
-
-        .range-input .value {
-            min-width: 60px;
-            text-align: center;
-            font-weight: 600;
-            color: #667eea;
-        }
-
-        .dual-input {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .dual-input input {
-            margin-bottom: 0;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            flex: 1;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
-
-        .btn-success {
-            background: #27ae60;
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #229954;
-        }
-
-        .btn-warning {
-            background: #f39c12;
-            color: white;
-        }
-
-        .btn-warning:hover {
-            background: #e67e22;
-        }
-
-        .btn-danger {
-            background: #e74c3c;
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #c0392b;
-        }
-
-        .plots-panel {
-            padding: 30px;
-            background: white;
-        }
-
-        .plot-container {
-            margin-bottom: 30px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-        }
-
-        .plot-title {
-            font-size: 1.2em;
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-
-        .plot-canvas {
-            position: relative;
-            height: 500px;
-        }
-
-        .result {
-            background: #e3f2fd;
-            border-left: 4px solid #2196f3;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 0 8px 8px 0;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9em;
-        }
-
-        .error-message {
-            background: #ffebee;
-            border-left: 4px solid #f44336;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 0 8px 8px 0;
-            color: #c62828;
-            display: none;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #666;
-        }
-
-        .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
-        }
-
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-
-        .tabs {
-            display: flex;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #e9ecef;
-        }
-
-        .tab {
-            padding: 10px 20px;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            transition: all 0.3s ease;
-            font-weight: 600;
-        }
-
-        .tab.active {
-            color: #667eea;
-            border-bottom-color: #667eea;
-        }
-
-        .tab:hover {
-            color: #667eea;
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .demo-section {
-            background: white;
-            margin: 20px 0;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .demo-section h2 {
-            color: #34495e;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 10px;
-        }
-
-        .controls {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin: 20px 0;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        .full-width {
-            grid-column: 1 / -1;
-        }
-
-        .status {
-            padding: 10px;
-            border-radius: 5px;
-            margin: 10px 0;
-        }
-
-        .status.success {
-            background: #d5f4e6;
-            color: #27ae60;
-            border: 1px solid #27ae60;
-        }
-
-        .status.error {
-            background: #fadbd8;
-            color: #e74c3c;
-            border: 1px solid #e74c3c;
-        }
-
-        .status.info {
-            background: #d6eaf8;
-            color: #3498db;
-            border: 1px solid #3498db;
-        }
-
-        .audio-controls {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin: 15px 0;
-        }
-
-        .audio-controls button {
-            padding: 8px 15px;
-        }
-
-        @media (max-width: 768px) {
-            .main-content {
-                grid-template-columns: 1fr;
-            }
-
-            .controls-panel {
-                border-right: none;
-                border-bottom: 1px solid #e9ecef;
-            }
-
-            .grid {
-                grid-template-columns: 1fr;
-            }
-
-            .controls {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+<meta charset="utf-8" />
+<title>Filter DSP JS Library Test</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root { 
+    --bg:#0a0e13; --fg:#f0f4f8; --muted:#94a3b8; --accent:#3b82f6; --grid:#1e293b; 
+    --surface:#111827; --border:#374151; --hover:#1f2937;
+  }
+  * { box-sizing: border-box; }
+  body { 
+    margin:0; background:var(--bg); color:var(--fg); 
+    font:14px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-weight:400;
+  }
+  header { 
+    padding:20px 24px; border-bottom:1px solid var(--border); 
+    background:var(--surface); backdrop-filter:blur(10px);
+    box-shadow:0 1px 3px rgba(0,0,0,0.1);
+  }
+  h1 { font-size:18px; margin:0; color:var(--accent); font-weight:600; }
+  .row { 
+    display:flex; gap:16px; flex-wrap:wrap; align-items:end; 
+    max-width:1400px; margin:0 auto;
+  }
+  .field { 
+    display:flex; flex-direction:column; gap:8px; 
+    min-width:140px; position:relative;
+  }
+  .field label { 
+    font-size:12px; color:var(--muted); font-weight:500; 
+    text-transform:uppercase; letter-spacing:0.5px;
+  }
+  .field input, .field select { 
+    background:var(--surface); border:1px solid var(--border); 
+    color:var(--fg); padding:10px 12px; border-radius:8px; 
+    min-width:140px; font-size:13px; transition:all 0.2s ease;
+    box-shadow:0 1px 2px rgba(0,0,0,0.05);
+  }
+  .field input:focus, .field select:focus { 
+    outline:none; border-color:var(--accent); 
+    box-shadow:0 0 0 3px rgba(59,130,246,0.1);
+  }
+  .field input:hover, .field select:hover {
+    border-color:var(--hover); background:var(--hover);
+  }
+  .field input[type="range"] { 
+    width:160px; height:8px; background:var(--grid); 
+    border-radius:4px; outline:none; -webkit-appearance:none; 
+    appearance:none; border:none; padding:0;
+  }
+  .field input[type="range"]::-webkit-slider-thumb { 
+    -webkit-appearance:none; width:20px; height:20px; 
+    background:linear-gradient(135deg, var(--accent), #1d4ed8);
+    border-radius:50%; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.2);
+    transition:transform 0.2s ease;
+  }
+  .field input[type="range"]::-webkit-slider-thumb:hover {
+    transform:scale(1.1);
+  }
+  .field input[type="range"]::-moz-range-thumb {
+    width:20px; height:20px; background:linear-gradient(135deg, var(--accent), #1d4ed8);
+    border-radius:50%; cursor:pointer; border:none; box-shadow:0 2px 4px rgba(0,0,0,0.2);
+  }
+  .slider-value { 
+    font-size:12px; color:var(--accent); margin-top:4px; 
+    text-align:center; font-weight:600; background:rgba(59,130,246,0.1);
+    padding:2px 6px; border-radius:4px; display:inline-block;
+  }
+  main { padding:20px; max-width:1400px; margin:0 auto; }
+  .card { 
+    background:var(--surface); border:1px solid var(--border); 
+    border-radius:12px; padding:20px; display:flex; flex-direction:column; 
+    min-height:400px; box-shadow:0 1px 3px rgba(0,0,0,0.1);
+    transition:box-shadow 0.2s ease;
+  }
+  .card:hover { box-shadow:0 4px 6px rgba(0,0,0,0.1); }
+  .card h3 { 
+    margin:0 0 12px 0; font-size:14px; color:var(--muted); 
+    font-weight:600; text-transform:uppercase; letter-spacing:0.5px;
+  }
+  canvas { width:100%; height:360px; display:block; }
+  .sos { grid-column:1 / -1; }
+  pre { 
+    margin:0; white-space:pre-wrap; word-break:break-word; 
+    background:var(--bg); border:1px solid var(--border); 
+    border-radius:8px; padding:16px; color:var(--fg); 
+    font-family:'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+    font-size:12px; line-height:1.5; overflow-x:auto;
+  }
+  footer { padding:8px 14px; color:var(--muted); border-top:1px solid var(--grid); font-size:12px; }
+  a { color:var(--accent); text-decoration:none; }
+  .status { padding:8px 12px; background:#1a2330; border:1px solid var(--grid); border-radius:8px; margin:8px 0; font-size:12px; }
+  .status.success { border-color:#4ade80; color:#4ade80; }
+  .status.error { border-color:#f87171; color:#f87171; }
+  
+  /* Tab styles */
+  .tabs { margin:20px 0; }
+  .tab-buttons { 
+    display:flex; gap:2px; margin-bottom:0; 
+    background:var(--surface); padding:4px; border-radius:8px;
+    border:1px solid var(--border);
+  }
+  .tab-button { 
+    background:transparent; border:none; color:var(--muted); 
+    padding:10px 20px; border-radius:6px; cursor:pointer; 
+    font-size:13px; font-weight:500; transition:all 0.2s ease;
+    flex:1; text-align:center;
+  }
+  .tab-button.active { 
+    background:var(--accent); color:white; 
+    box-shadow:0 2px 4px rgba(59,130,246,0.3);
+  }
+  .tab-button:hover:not(.active) { 
+    background:var(--hover); color:var(--fg); 
+  }
+  .tab-content { display:none; }
+  .tab-content.active { display:block; }
+  .tab-panel { 
+    background:var(--surface); border:1px solid var(--border); 
+    border-radius:8px; padding:20px; min-height:400px;
+    margin-top:8px; box-shadow:0 1px 3px rgba(0,0,0,0.1);
+  }
+</style>
 </head>
-
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🎵 DSP Filter Library - Advanced Demonstration</h1>
-            <p>Comprehensive showcase of digital signal processing capabilities</p>
-        </div>
+  <header>
+    <div class="row">
+      <div class="field">
+        <label for="family">Family</label>
+        <select id="family">
+          <option value="butter">Butterworth</option>
+          <option value="cheby1">Chebyshev I (Rp)</option>
+          <option value="cheby2">Chebyshev II (Rs)</option>
+          <option value="ellip">Elliptic (Rp & Rs)</option>
+          <option value="linkwitz">Linkwitz–Riley</option>
+          <option value="bessel">Bessel (Thomson)</option>
+          <option value="fir">FIR (Windowed)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="kind">Kind</label>
+        <select id="kind">
+          <option value="lowpass">Lowpass</option>
+          <option value="highpass">Highpass</option>
+          <option value="bandpass">Bandpass</option>
+          <option value="bandstop">Bandstop</option>
+        </select>
+      </div>
 
-        <div class="main-content">
-            <div class="controls-panel">
-                <div class="error-message" id="errorMessage"></div>
+      <div class="field only-iir">
+        <label for="order">IIR Order (N)</label>
+        <input id="order" type="range" min="2" max="20" step="1" value="6" />
+        <div id="order-value" class="slider-value">6</div>
+      </div>
 
-                <!-- Filter Design Controls -->
-                <div class="control-group">
-                    <label for="filterType">Filter Type</label>
-                    <select id="filterType">
-                        <option value="lowpass">Low Pass</option>
-                        <option value="highpass">High Pass</option>
-                        <option value="bandpass">Band Pass</option>
-                        <option value="bandstop">Band Stop</option>
-                    </select>
-                </div>
+      <div class="field only-fir" style="display:none">
+        <label for="taps">FIR Taps (odd)</label>
+        <input id="taps" type="range" min="11" max="255" step="2" value="101" />
+        <div id="taps-value" class="slider-value">101</div>
+      </div>
 
-                <div class="control-group">
-                    <label for="filterDesign">Filter Design</label>
-                    <select id="filterDesign" onchange="toggleWindowControls(this.value)">
-                        <option value="fir">FIR</option>
-                        <option value="butterworth">Butterworth</option>
-                        <option value="chebyshev1">Chebyshev Type 1</option>
-                        <option value="chebyshev2">Chebyshev Type 2</option>
-                        <option value="elliptic">Elliptic (Cauer)</option>
-                        <option value="bessel">Bessel</option>
-                        <option value="linkwitz-riley">Linkwitz-Riley</option>
-                    </select>
-                </div>
+      <div class="field only-cheby1 only-ellip" style="display:none">
+        <label for="rp">Passband ripple Rp (dB)</label>
+        <input id="rp" type="range" min="0.1" max="3" step="0.1" value="1" />
+        <div id="rp-value" class="slider-value">1.0</div>
+      </div>
+      <div class="field only-cheby2 only-ellip" style="display:none">
+        <label for="rs">Stopband ripple Rs (dB)</label>
+        <input id="rs" type="range" min="10" max="200" step="1" value="60" />
+        <div id="rs-value" class="slider-value">60</div>
+      </div>
 
-                <div class="control-group">
-                    <label for="samplingFreq">Sampling Frequency (Hz)</label>
-                    <div class="range-input">
-                        <input type="range" id="samplingFreq" min="1000" max="192000" value="44100" step="1000"
-                            oninput="document.getElementById('samplingFreqValue').textContent = this.value">
-                        <span class="value" id="samplingFreqValue">44100</span>
-                    </div>
-                </div>
+      <div class="field only-fir" style="display:none">
+        <label for="win">Window</label>
+        <select id="win">
+          <option value="rect">Rectangular</option>
+          <option value="hann">Hann</option>
+          <option value="hamming" selected>Hamming</option>
+          <option value="blackman">Blackman</option>
+          <option value="blackmanHarris">Blackman-Harris</option>
+          <option value="blackmanNuttall">Blackman-Nuttall</option>
+          <option value="nuttall">Nuttall</option>
+          <option value="exactBlackman">Exact Blackman</option>
+          <option value="bartlett">Bartlett</option>
+          <option value="bartlettHann">Bartlett-Hann</option>
+          <option value="welch">Welch</option>
+          <option value="triangular">Triangular</option>
+          <option value="gauss">Gaussian</option>
+          <option value="tukey">Tukey</option>
+          <option value="poisson">Poisson</option>
+          <option value="parzen">Parzen</option>
+          <option value="bohman">Bohman</option>
+          <option value="lanczos">Lanczos</option>
+          <option value="cosine">Cosine</option>
+          <option value="flatTop">Flat-top</option>
+          <option value="dolphChebyshev">Dolph-Chebyshev</option>
+          <option value="taylor">Taylor</option>
+          <option value="kaiser">Kaiser</option>
+        </select>
+      </div>
+      <div class="field only-fir only-kaiser" style="display:none">
+        <label for="beta">Kaiser β</label>
+        <input id="beta" type="range" min="0" max="12" step="0.1" value="6" />
+        <div id="beta-value" class="slider-value">6.0</div>
+      </div>
+      <div class="field only-fir only-tukey" style="display:none">
+        <label for="alpha">Tukey α</label>
+        <input id="alpha" type="range" min="0" max="1" step="0.05" value="0.5" />
+        <div id="alpha-value" class="slider-value">0.5</div>
+      </div>
+      <div class="field only-fir only-gauss" style="display:none">
+        <label for="sigma">Gaussian σ</label>
+        <input id="sigma" type="range" min="0.1" max="1" step="0.05" value="0.4" />
+        <div id="sigma-value" class="slider-value">0.4</div>
+      </div>
+      <div class="field only-fir only-poisson" style="display:none">
+        <label for="poissonAlpha">Poisson α</label>
+        <input id="poissonAlpha" type="range" min="0.5" max="5" step="0.1" value="2" />
+        <div id="poissonAlpha-value" class="slider-value">2.0</div>
+      </div>
 
-                <div class="control-group">
-                    <label for="filterOrder">Filter Order</label>
-                    <div class="range-input">
-                        <input type="range" id="filterOrder" min="1" max="12" value="4" step="1"
-                            oninput="document.getElementById('filterOrderValue').textContent = this.value">
-                        <span class="value" id="filterOrderValue">4</span>
-                    </div>
-                </div>
+      <div class="field">
+        <label for="fs">Sample rate Fs (Hz)</label>
+        <input id="fs" type="range" min="1000" max="192000" step="1000" value="48000" />
+        <div id="fs-value" class="slider-value">48000</div>
+      </div>
 
-                <div class="control-group" id="cutoffGroup">
-                    <label for="cutoffFreq">Cutoff Frequency (Hz)</label>
-                    <div class="range-input">
-                        <input type="range" id="cutoffFreq" min="100" max="20000" value="10000" step="100"
-                            oninput="document.getElementById('cutoffFreqValue').textContent = this.value">
-                        <span class="value" id="cutoffFreqValue">1000</span>
-                    </div>
-                </div>
-
-                <div class="control-group" id="bandGroup" style="display: none;">
-                    <label>Band Frequencies (Hz)</label>
-                    <div class="dual-input">
-                        <input type="number" id="lowFreq" placeholder="Low" value="8000" min="100">
-                        <input type="number" id="highFreq" placeholder="High" value="10000" min="100">
-                    </div>
-                </div>
-
-                <div class="control-group">
-                    <label for="passbandRipple">Passband Ripple (dB)</label>
-                    <div class="range-input">
-                        <input type="range" id="passbandRipple" min="0.1" max="3" value="1" step="0.1"
-                            oninput="document.getElementById('passbandRippleValue').textContent = this.value">
-                        <span class="value" id="passbandRippleValue">1</span>
-                    </div>
-                </div>
-
-                <div class="control-group" id="stopbandAttenuationGroup">
-                    <label for="stopbandAttenuation">Stopband Attenuation (dB)</label>
-                    <div class="range-input">
-                        <input type="range" id="stopbandAttenuation" min="20" max="100" value="40" step="5"
-                            oninput="document.getElementById('stopbandAttenuationValue').textContent = this.value">
-                        <span class="value" id="stopbandAttenuationValue">40</span>
-                    </div>
-                </div>
-
-                <div class="control-group" id="windowGroup" style="display: none;">
-                    <label for="windowType">Window Type (FIR)</label>
-                    <select id="windowType" onchange="toggleWindowParameters(this.value)">
-                        <option value="hann">Hann</option>
-                        <option value="hamming">Hamming</option>
-                        <option value="blackman">Blackman</option>
-                        <option value="blackmanHarris">Blackman-Harris</option>
-                        <option value="blackmanNuttall">Blackman-Nuttall</option>
-                        <option value="bartlett">Bartlett</option>
-                        <option value="bartlettHann">Bartlett-Hann</option>
-                        <option value="cosine">Cosine</option>
-                        <option value="lanczos">Lanczos</option>
-                        <option value="bohman">Bohman</option>
-                        <option value="gauss">Gaussian</option>
-                        <option value="tukey">Tukey</option>
-                        <option value="kaiser">Kaiser</option>
-                        <option value="flatTop">Flat Top</option>
-                        <option value="rectangle">Rectangle</option>
-                    </select>
-                </div>
-
-                <div class="control-group" id="windowParamsGroup" style="display: none;">
-                    <label for="windowParam">Window Parameter</label>
-                    <div class="range-input">
-                        <input type="range" id="windowParam" min="0.1" max="20" value="8.6" step="0.1"
-                            oninput="document.getElementById('windowParamValue').textContent = this.value">
-                        <span class="value" id="windowParamValue">8.6</span>
-                    </div>
-                    <small id="windowParamLabel">Kaiser Beta (8.6)</small>
-                </div>
-
-                <div class="button-group">
-                    <button class="btn btn-primary" onclick="designFilter()">Design Filter</button>
-                    <button class="btn btn-success" onclick="analyzeFilter()">Analyze Response</button>
-                    <button class="btn btn-secondary" onclick="resetControls()">Reset</button>
-                </div>
-
-            </div>
-
-            <div class="plots-panel">
-                <div class="tabs">
-                    <div class="tab active" onclick="showTab('frequency')">Frequency Response</div>
-                    <div class="tab" onclick="showTab('phase')">Phase Response</div>
-                    <div class="tab" onclick="showTab('zplane')">Z-Plane</div>
-                    <div class="tab" onclick="showTab('impulse')">Impulse Response</div>
-                    <div class="tab" onclick="showTab('coefficients')">Coefficients</div>
-                    <div class="tab" onclick="showTab('windows')">Windows</div>
-                    <div class="tab" onclick="showTab('fft')">FFT Analysis</div>
-                </div>
-
-                <div id="frequencyTab" class="tab-content active">
-                    <div class="plot-container">
-                        <div class="plot-title">Magnitude Response</div>
-                        <div class="plot-canvas">
-                            <canvas id="freqResponseChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="phaseTab" class="tab-content">
-                    <div class="plot-container">
-                        <div class="plot-title">Phase Response</div>
-                        <div class="plot-canvas">
-                            <canvas id="phaseResponseChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="zplaneTab" class="tab-content">
-                    <div class="plot-container">
-                        <div class="plot-title">Z-Plane - Poles and Zeros</div>
-                        <div class="plot-canvas" style="display: flex; justify-content: center; align-items: center;">
-                            <canvas id="zplaneChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="impulseTab" class="tab-content">
-                    <div class="plot-container">
-                        <div class="plot-title">Impulse Response</div>
-                        <div class="plot-canvas">
-                            <canvas id="impulseResponseChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="coefficientsTab" class="tab-content">
-                    <div class="plot-container">
-                        <div class="plot-title">Filter Coefficients</div>
-                        <div style="margin-bottom: 20px;">
-                            <div style="display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap;">
-                                <div>
-                                    <label for="coeffDisplayType">Display Type:</label>
-                                    <select id="coeffDisplayType">
-                                        <option value="bar">Bar Chart</option>
-                                        <option value="line">Line Plot</option>
-                                        <option value="table">Table View</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label for="coeffMaxLength">Max Coefficients:</label>
-                                    <input type="range" id="coeffMaxLength" min="10" max="100" value="50" step="5"
-                                        oninput="document.getElementById('coeffMaxLengthValue').textContent = this.value">
-                                    <span id="coeffMaxLengthValue">50</span>
-                                </div>
-                            </div>
-                            <div style="display: flex; gap: 10px;">
-                                <button class="btn btn-primary" onclick="plotCoefficients()">Plot Coefficients</button>
-                                <button class="btn btn-success" onclick="exportCoefficients()">Export Data</button>
-                            </div>
-                        </div>
-                        <div class="plot-canvas">
-                            <canvas id="coefficientsChart"></canvas>
-                        </div>
-                        <div id="coefficients-result" class="result" style="margin-top: 15px;"></div>
-
-                        <!-- All Coefficients Display Section -->
-                        <div id="allCoefficientsSection" style="margin-top: 20px; display: none;">
-                            <div class="plot-container">
-                                <div class="plot-title">All Filter Coefficients</div>
-                                <div style="margin-bottom: 15px;">
-                                    <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
-                                        <button class="btn btn-primary" onclick="showAllCoefficients()">Show All
-                                            Coefficients</button>
-                                        <button class="btn btn-secondary" onclick="hideAllCoefficients()">Hide All
-                                            Coefficients</button>
-                                        <button class="btn btn-success" onclick="copyAllCoefficients()">Copy to
-                                            Clipboard</button>
-                                    </div>
-                                </div>
-                                <div id="allCoefficientsDisplay"
-                                    style="max-height: 600px; overflow-y: auto; border: 1px solid #ddd; border-radius: 5px; padding: 15px; background: #f8f9fa;">
-                                    <!-- All coefficients will be displayed here -->
-                                </div>
-
-                                <!-- Multiline Text Input for Coefficients -->
-                                <div style="margin-top: 20px;">
-                                    <h4 style="color: #2c3e50; margin-bottom: 10px;">Coefficients Text Format</h4>
-                                    <div style="margin-bottom: 10px;">
-                                        <label for="coefficientsTextFormat"
-                                            style="display: block; margin-bottom: 5px; font-weight: 600;">Select
-                                            Format:</label>
-                                        <select id="coefficientsTextFormat" onchange="updateCoefficientsText()"
-                                            style="padding: 5px; border: 1px solid #ddd; border-radius: 3px;">
-                                            <option value="arrays">JavaScript Arrays</option>
-                                            <option value="matlab">MATLAB Format</option>
-                                            <option value="python">Python Lists</option>
-                                            <option value="csv">CSV Format</option>
-                                            <option value="table">Table Format</option>
-                                            <option value="raw">Raw Values</option>
-                                        </select>
-                                    </div>
-                                    <textarea id="coefficientsTextArea" rows="20"
-                                        style="width: 100%; font-family: 'Courier New', monospace; font-size: 0.9em; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: #f8f9fa; resize: vertical;"
-                                        placeholder="Coefficients will appear here..." readonly></textarea>
-                                    <div style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
-                                        <button class="btn btn-primary" onclick="copyCoefficientsText()">Copy
-                                            Text</button>
-                                        <button class="btn btn-success" onclick="downloadCoefficientsText()">Download as
-                                            Text</button>
-                                        <button class="btn btn-secondary"
-                                            onclick="clearCoefficientsText()">Clear</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="windowsTab" class="tab-content">
-                    <div class="plot-container">
-                        <div class="plot-title">Window Functions</div>
-                        <div style="margin-bottom: 20px;">
-                            <div style="display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap;">
-                                <div>
-                                    <label for="windowLength">Window Length:</label>
-                                    <input type="range" id="windowLength" min="16" max="256" value="64" step="1"
-                                        oninput="document.getElementById('windowLengthValue').textContent = this.value">
-                                    <span id="windowLengthValue">64</span>
-                                </div>
-                                <div>
-                                    <label for="windowSelect">Window Type:</label>
-                                    <select id="windowSelect">
-                                        <option value="hann">Hann</option>
-                                        <option value="hamming">Hamming</option>
-                                        <option value="blackman">Blackman</option>
-                                        <option value="blackmanHarris">Blackman-Harris</option>
-                                        <option value="blackmanNuttall">Blackman-Nuttall</option>
-                                        <option value="bartlett">Bartlett</option>
-                                        <option value="bartlettHann">Bartlett-Hann</option>
-                                        <option value="cosine">Cosine</option>
-                                        <option value="lanczos">Lanczos</option>
-                                        <option value="bohman">Bohman</option>
-                                        <option value="gauss">Gaussian</option>
-                                        <option value="tukey">Tukey</option>
-                                        <option value="kaiser">Kaiser</option>
-                                        <option value="flatTop">Flat Top</option>
-                                        <option value="rectangle">Rectangle</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div style="display: flex; gap: 10px;">
-                                <button class="btn btn-primary" onclick="generateWindow()">Generate Window</button>
-                                <button class="btn btn-success" onclick="compareWindows()">Compare Windows</button>
-                            </div>
-                        </div>
-                        <div class="plot-canvas">
-                            <canvas id="windowChart"></canvas>
-                        </div>
-                        <div id="window-result" class="result" style="margin-top: 15px;"></div>
-                    </div>
-                </div>
-
-                <div id="fftTab" class="tab-content">
-                    <div class="plot-container">
-                        <div class="plot-title">FFT Analysis</div>
-                        <div style="margin-bottom: 20px;">
-                            <div style="display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap;">
-                                <div>
-                                    <label for="fftFreq1">Frequency 1 (Hz):</label>
-                                    <input type="range" id="fftFreq1" min="100" max="2000" value="440" step="10"
-                                        oninput="document.getElementById('fftFreq1Value').textContent = this.value">
-                                    <span id="fftFreq1Value">440</span>
-                                </div>
-                                <div>
-                                    <label for="fftFreq2">Frequency 2 (Hz):</label>
-                                    <input type="range" id="fftFreq2" min="100" max="2000" value="880" step="10"
-                                        oninput="document.getElementById('fftFreq2Value').textContent = this.value">
-                                    <span id="fftFreq2Value">880</span>
-                                </div>
-                                <div>
-                                    <label for="fftAmp1">Amplitude 1:</label>
-                                    <input type="range" id="fftAmp1" min="0.1" max="2" step="0.1" value="1"
-                                        oninput="document.getElementById('fftAmp1Value').textContent = this.value">
-                                    <span id="fftAmp1Value">1</span>
-                                </div>
-                                <div>
-                                    <label for="fftAmp2">Amplitude 2:</label>
-                                    <input type="range" id="fftAmp2" min="0.1" max="2" step="0.1" value="0.5"
-                                        oninput="document.getElementById('fftAmp2Value').textContent = this.value">
-                                    <span id="fftAmp2Value">0.5</span>
-                                </div>
-                                <div>
-                                    <label for="fftLength">Signal Length:</label>
-                                    <input type="range" id="fftLength" min="64" max="1024" value="256" step="64"
-                                        oninput="document.getElementById('fftLengthValue').textContent = this.value">
-                                    <span id="fftLengthValue">256</span>
-                                </div>
-                            </div>
-                            <div style="display: flex; gap: 10px;">
-                                <button class="btn btn-primary" onclick="generateFFTSignal()">Generate Signal</button>
-                                <button class="btn btn-success" onclick="performFFTAnalysis()">Perform FFT</button>
-                                <button class="btn btn-warning" onclick="performIFFTAnalysis()">Perform IFFT</button>
-                            </div>
-                        </div>
-                        <div class="plot-canvas">
-                            <canvas id="fftChart"></canvas>
-                        </div>
-                        <div id="fft-result" class="result" style="margin-top: 15px;"></div>
-                    </div>
-                </div>
-
-                <div class="loading" id="loadingIndicator" style="display: none;">
-                    <div class="spinner"></div>
-                    <div>Calculating filter response...</div>
-                </div>
-
-                <div id="filter-result" class="result"></div>
-            </div>
-        </div>
-
-
+      <div class="field only-lp-hp">
+        <label for="fc">Fc (Hz)</label>
+        <input id="fc" type="range" min="1" max="24000" step="100" value="4000" />
+        <div id="fc-value" class="slider-value">4000</div>
+      </div>
+      <div class="field only-bp-bs" style="display:none">
+        <label for="f1">F1 (Hz)</label>
+        <input id="f1" type="range" min="1" max="24000" step="100" value="2000" />
+        <div id="f1-value" class="slider-value">2000</div>
+      </div>
+      <div class="field only-bp-bs" style="display:none">
+        <label for="f2">F2 (Hz)</label>
+        <input id="f2" type="range" min="1" max="24000" step="100" value="8000" />
+        <div id="f2-value" class="slider-value">8000</div>
+      </div>
     </div>
+  </header>
 
-    <script src="./dsp-filter-library.min.js"></script>
-    <script>
-        // Global variables
-        let audioContext, audioFilter, isAudioActive = false;
-        let freqResponseChart, phaseResponseChart, impulseResponseChart, zplaneChart, windowChart, fftChart, coefficientsChart;
-        let currentFilter = null;
+  <main>
+    <div class="tabs">
+      <div class="tab-buttons">
+        <button class="tab-button active" data-tab="frequency">Frequency Response</button>
+        <button class="tab-button" data-tab="time">Time Domain</button>
+        <button class="tab-button" data-tab="poles-zeros">Poles & Zeros</button>
+        <button class="tab-button" data-tab="coefficients">Coefficients</button>
+      </div>
+      
+      <div class="tab-content active" id="frequency">
+        <div class="tab-panel">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
+            <div class="card"><h3>Magnitude Response (dB)</h3><canvas id="magCanvas"></canvas></div>
+            <div class="card"><h3>Phase Response (deg, unwrapped)</h3><canvas id="phaseCanvas"></canvas></div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="tab-content" id="time">
+        <div class="tab-panel">
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:15px;">
+            <div class="card"><h3>Impulse Response</h3><canvas id="impCanvas"></canvas></div>
+            <div class="card"><h3>Group Delay (samples)</h3><canvas id="gdCanvas"></canvas></div>
+            <div class="card"><h3>Phase Delay (samples)</h3><canvas id="pdCanvas"></canvas></div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="tab-content" id="poles-zeros">
+        <div class="tab-panel">
+          <div class="card"><h3>Z-Plane Poles & Zeros</h3><canvas id="pzCanvas"></canvas></div>
+        </div>
+      </div>
+      
+      <div class="tab-content" id="coefficients">
+        <div class="tab-panel">
+          <div class="card sos"><h3>Second-Order Sections / Taps</h3><pre id="sosOut">// Filter design will appear here</pre></div>
+        </div>
+      </div>
+    </div>
+  </main>
 
-        // Tab functionality
-        function showTab(tabName) {
-            // Hide all tabs
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
+  <footer>
+    Testing filter-dsp-js library: IIR via analog prototypes + BLT; FIR via windowed-sinc.
+  </footer>
 
-            // Show selected tab
-            document.getElementById(tabName + 'Tab').classList.add('active');
-            event.target.classList.add('active');
+  <!-- Load the UMD build of the library -->
+  <script src="./dsp-filter-library.min.js"></script>
+  
+  <script>
+  (() => {
+    console.log('Script starting...');
+    
+    // Check if library loaded successfully
+    console.log('Checking DSPFilterLibrary...');
+    if (typeof DSPFilterLibrary === 'undefined') {
+      console.error('DSPFilterLibrary is undefined');
+      return;
+    }
+    
+    console.log('DSPFilterLibrary found:', DSPFilterLibrary);
+    console.log('Available exports:', Object.keys(DSPFilterLibrary));
+    
+    // The FilterDSP class is available as DSPFilterLibrary.FilterDSP in UMD build
+    const FilterDSPClass = DSPFilterLibrary.FilterDSP;
+    
+    if (typeof FilterDSPClass === 'undefined') {
+      console.error('FilterDSP class not found in DSPFilterLibrary');
+      return;
+    }
+    
+    console.log('FilterDSP class found:', FilterDSPClass);
 
-            // Auto-plot coefficients when switching to coefficients tab
-            if (tabName === 'coefficients' && currentFilter) {
-                setTimeout(() => {
-                    plotCoefficients();
-                }, 100);
-            }
-        }
-
-        // Toggle window controls function
-        function toggleWindowControls(design) {
-            const windowGroup = document.getElementById('windowGroup');
-            const passbandGroup = document.getElementById('passbandRipple').parentElement.parentElement;
-            const stopbandGroup = document.getElementById('stopbandAttenuationGroup');
-            const filterOrder = document.getElementById('filterOrder');
-
-            console.log('Toggling controls for design:', design);
-            console.log('Window group found:', !!windowGroup);
-            console.log('Passband group found:', !!passbandGroup);
-
-            if (design === 'fir') {
-                if (windowGroup) windowGroup.style.display = 'block';
-                if (passbandGroup) passbandGroup.style.display = 'none';
-                if (stopbandGroup) stopbandGroup.style.display = 'none';
-
-                // Update filter order limits for FIR
-                if (filterOrder) {
-                    filterOrder.max = 500;
-                    filterOrder.step = 1;
-                    // Set FIR default order
-                    filterOrder.value = 64;
-                    document.getElementById('filterOrderValue').textContent = '64';
-                }
-                console.log('Showing window group, hiding passband group, setting FIR order limits');
-            } else if (design === 'elliptic') {
-                if (windowGroup) windowGroup.style.display = 'none';
-                if (passbandGroup) passbandGroup.style.display = 'block';
-                if (stopbandGroup) stopbandGroup.style.display = 'block';
-
-                // Update filter order limits for IIR
-                if (filterOrder) {
-                    filterOrder.max = 12;
-                    filterOrder.step = 1;
-                    // Set IIR default order
-                    filterOrder.value = 4;
-                    document.getElementById('filterOrderValue').textContent = '4';
-                }
-                console.log('Showing passband and stopband groups for elliptic filter');
-            } else {
-                if (windowGroup) windowGroup.style.display = 'none';
-                if (passbandGroup) passbandGroup.style.display = 'block';
-                if (stopbandGroup) stopbandGroup.style.display = 'none';
-
-                // Update filter order limits for IIR
-                if (filterOrder) {
-                    filterOrder.max = 12;
-                    filterOrder.step = 1;
-                    // Set IIR default order
-                    filterOrder.value = 4;
-                    document.getElementById('filterOrderValue').textContent = '4';
-                }
-                console.log('Hiding window group, showing passband group, setting IIR order limits');
-            }
-        }
-
-        // Toggle window parameters function
-        function toggleWindowParameters(windowType) {
-            const windowParamsGroup = document.getElementById('windowParamsGroup');
-            const windowParam = document.getElementById('windowParam');
-            const windowParamLabel = document.getElementById('windowParamLabel');
-
-            if (!windowParamsGroup || !windowParam || !windowParamLabel) return;
-
-            // Windows that need parameters
-            const paramWindows = {
-                'kaiser': { min: 0, max: 20, step: 0.1, default: 8.6, label: 'Kaiser Beta' },
-                'tukey': { min: 0, max: 1, step: 0.01, default: 0.5, label: 'Tukey Alpha' },
-                'gauss': { min: 0.1, max: 1, step: 0.01, default: 0.4, label: 'Gaussian Sigma' }
-            };
-
-            if (paramWindows[windowType]) {
-                const config = paramWindows[windowType];
-                windowParam.min = config.min;
-                windowParam.max = config.max;
-                windowParam.step = config.step;
-                windowParam.value = config.default;
-                windowParamLabel.textContent = `${config.label} (${config.default})`;
-                windowParamsGroup.style.display = 'block';
-                document.getElementById('windowParamValue').textContent = config.default;
-            } else {
-                windowParamsGroup.style.display = 'none';
-            }
-        }
-
-        // Make functions globally available
-        window.showTab = showTab;
-        window.designFilter = designFilter;
-        window.analyzeFilter = analyzeFilter;
-        window.resetControls = resetControls;
-        window.toggleWindowControls = toggleWindowControls;
-        window.toggleWindowParameters = toggleWindowParameters;
-        window.plotCoefficients = plotCoefficients;
-        window.exportCoefficients = exportCoefficients;
-        window.showAllCoefficients = showAllCoefficients;
-        window.hideAllCoefficients = hideAllCoefficients;
-        window.copyAllCoefficients = copyAllCoefficients;
-        window.updateCoefficientsText = updateCoefficientsText;
-        window.copyCoefficientsText = copyCoefficientsText;
-        window.downloadCoefficientsText = downloadCoefficientsText;
-        window.clearCoefficientsText = clearCoefficientsText;
-
-        // Control event handlers
-        function initializeControls() {
-            console.log('Initializing controls...');
-
-            // Simple function to update slider values
-            function updateSliderValue(sliderId, displayId) {
-                const slider = document.getElementById(sliderId);
-                const display = document.getElementById(displayId);
-
-                if (slider && display) {
-                    // Set initial value
-                    display.textContent = slider.value;
-
-                    // Add event listener
-                    slider.addEventListener('input', function () {
-                        display.textContent = this.value;
-                        console.log(sliderId + ' updated to:', this.value);
-                    });
-
-                    slider.addEventListener('change', function () {
-                        display.textContent = this.value;
-                        console.log(sliderId + ' changed to:', this.value);
-                    });
-                } else {
-                    console.error('Slider elements not found:', sliderId, displayId);
-                }
-            }
-
-            // Update all sliders
-            updateSliderValue('samplingFreq', 'samplingFreqValue');
-            updateSliderValue('filterOrder', 'filterOrderValue');
-            updateSliderValue('cutoffFreq', 'cutoffFreqValue');
-            updateSliderValue('passbandRipple', 'passbandRippleValue');
-            updateSliderValue('stopbandAttenuation', 'stopbandAttenuationValue');
-            
-            // Set FIR as default and configure controls
-            document.getElementById('filterDesign').value = 'fir';
-            document.getElementById('filterOrder').value = '64';
-            document.getElementById('filterOrder').max = '500';
-            document.getElementById('filterOrderValue').textContent = '64';
-            toggleWindowControls('fir');
-
-            // Handle filter type changes
-            document.getElementById('filterType').addEventListener('change', function () {
-                const type = this.value;
-                const cutoffGroup = document.getElementById('cutoffGroup');
-                const bandGroup = document.getElementById('bandGroup');
-
-                if (type === 'bandpass' || type === 'bandstop') {
-                    cutoffGroup.style.display = 'none';
-                    bandGroup.style.display = 'block';
-                } else {
-                    cutoffGroup.style.display = 'block';
-                    bandGroup.style.display = 'none';
-                }
-            });
-
-            // Handle filter design changes
-            const filterDesignSelect = document.getElementById('filterDesign');
-            if (filterDesignSelect) {
-                filterDesignSelect.addEventListener('change', function () {
-                    const design = this.value;
-                    const windowGroup = document.getElementById('windowGroup');
-                    const passbandGroup = document.getElementById('passbandRipple').parentElement.parentElement;
-                    const filterOrder = document.getElementById('filterOrder');
-
-                    console.log('Filter design changed to:', design);
-                    console.log('Window group found:', !!windowGroup);
-                    console.log('Passband group found:', !!passbandGroup);
-
-                    if (design === 'fir') {
-                        if (windowGroup) windowGroup.style.display = 'block';
-                        if (passbandGroup) passbandGroup.style.display = 'none';
-
-                        // Update filter order limits for FIR
-                        if (filterOrder) {
-                            filterOrder.max = 500;
-                            filterOrder.step = 1;
-                            // Set FIR default order
-                            filterOrder.value = 64;
-                            document.getElementById('filterOrderValue').textContent = '64';
-                        }
-                        console.log('Showing window group, hiding passband group, setting FIR order limits');
-                    } else {
-                        if (windowGroup) windowGroup.style.display = 'none';
-                        if (passbandGroup) passbandGroup.style.display = 'block';
-
-                        // Update filter order limits for IIR
-                        if (filterOrder) {
-                            filterOrder.max = 12;
-                            filterOrder.step = 1;
-                            // Set IIR default order
-                            filterOrder.value = 4;
-                            document.getElementById('filterOrderValue').textContent = '4';
-                        }
-                        console.log('Hiding window group, showing passband group, setting IIR order limits');
-                    }
-                });
-            } else {
-                console.error('filterDesign element not found');
-            }
-
-            // Update cutoff frequency range based on sampling frequency
-            document.getElementById('samplingFreq').addEventListener('input', function () {
-                const fs = parseInt(this.value);
-                const nyquist = fs / 2;
-                const cutoffInput = document.getElementById('cutoffFreq');
-                cutoffInput.max = Math.floor(nyquist * 0.9);
-
-                // Update band frequencies too
-                document.getElementById('lowFreq').max = Math.floor(nyquist * 0.9);
-                document.getElementById('highFreq').max = Math.floor(nyquist * 0.9);
-            });
-        }
-
-        // Initialize charts
-        function initCharts() {
-            // Frequency Response Chart
-            const freqCtx = document.getElementById('freqResponseChart').getContext('2d');
-            freqResponseChart = new Chart(freqCtx, {
-                type: 'line',
-                data: { labels: [], datasets: [] },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    elements: {
-                        point: {
-                            radius: 0
-                        }
-                    },
-                    scales: {
-                        x: { type: 'linear', title: { display: true, text: 'Frequency (Hz)' } },
-                        y: { title: { display: true, text: 'Magnitude (dB)' } }
-                    }
-                }
-            });
-
-            // Phase Response Chart
-            const phaseCtx = document.getElementById('phaseResponseChart').getContext('2d');
-            phaseResponseChart = new Chart(phaseCtx, {
-                type: 'line',
-                data: { labels: [], datasets: [] },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    elements: {
-                        point: {
-                            radius: 0
-                        }
-                    },
-                    scales: {
-                        x: { type: 'linear', title: { display: true, text: 'Frequency (Hz)' } },
-                        y: { title: { display: true, text: 'Phase (radians)' } }
-                    }
-                }
-            });
-
-            // Impulse Response Chart
-            const impulseCtx = document.getElementById('impulseResponseChart').getContext('2d');
-            impulseResponseChart = new Chart(impulseCtx, {
-                type: 'line',
-                data: { labels: [], datasets: [] },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    elements: {
-                        point: {
-                            radius: 0
-                        }
-                    },
-                    scales: {
-                        x: { title: { display: true, text: 'Time (samples)' } },
-                        y: { title: { display: true, text: 'Amplitude' } }
-                    }
-                }
-            });
-
-            // Z-Plane Chart
-            const zplaneCtx = document.getElementById('zplaneChart').getContext('2d');
-            zplaneChart = new Chart(zplaneCtx, {
-                type: 'scatter',
-                data: { labels: [], datasets: [] },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    aspectRatio: 1,
-                    scales: {
-                        x: {
-                            title: { display: true, text: 'Real Part' },
-                            min: -1.2,
-                            max: 1.2
-                        },
-                        y: {
-                            title: { display: true, text: 'Imaginary Part' },
-                            min: -1.2,
-                            max: 1.2
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: true,
-                            labels: {
-                                usePointStyle: true
-                            }
-                        }
-                    }
-                }
-            });
-
-            // Window Chart
-            const windowCtx = document.getElementById('windowChart').getContext('2d');
-            windowChart = new Chart(windowCtx, {
-                type: 'line',
-                data: { labels: [], datasets: [] },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    elements: {
-                        point: {
-                            radius: 0
-                        }
-                    },
-                    scales: {
-                        x: { title: { display: true, text: 'Sample' } },
-                        y: { title: { display: true, text: 'Amplitude' } }
-                    }
-                }
-            });
-
-            // FFT Chart
-            const fftCtx = document.getElementById('fftChart').getContext('2d');
-            fftChart = new Chart(fftCtx, {
-                type: 'line',
-                data: { labels: [], datasets: [] },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    elements: {
-                        point: {
-                            radius: 0
-                        }
-                    },
-                    scales: {
-                        x: { title: { display: true, text: 'Frequency (Hz)' } },
-                        y: { title: { display: true, text: 'Magnitude' } }
-                    }
-                }
-            });
-
-            // Coefficients Chart
-            const coeffCtx = document.getElementById('coefficientsChart').getContext('2d');
-            coefficientsChart = new Chart(coeffCtx, {
-                type: 'bar',
-                data: { labels: [], datasets: [] },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: { title: { display: true, text: 'Coefficient Index' } },
-                        y: { title: { display: true, text: 'Value' } }
-                    },
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'top'
-                        }
-                    }
-                }
-            });
-
-            // Audio Chart - removed as it's not in the current HTML structure
-        }
-
-        // Filter Design
-        function designFilter() {
-            const { Filter } = DSPFilterLibrary;
-            const type = document.getElementById('filterType').value;
-            const method = document.getElementById('filterDesign').value;
-            const cutoff = parseFloat(document.getElementById('cutoffFreq').value);
-            const fs = parseFloat(document.getElementById('samplingFreq').value);
-            const order = parseInt(document.getElementById('filterOrder').value);
-            const passbandRipple = parseFloat(document.getElementById('passbandRipple').value);
-
+    // ---------- Tab functionality ----------
+    function initTabs() {
+      const tabButtons = document.querySelectorAll('.tab-button');
+      const tabContents = document.querySelectorAll('.tab-content');
+      
+      tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          const targetTab = button.getAttribute('data-tab');
+          
+          // Remove active class from all buttons and contents
+          tabButtons.forEach(btn => btn.classList.remove('active'));
+          tabContents.forEach(content => content.classList.remove('active'));
+          
+          // Add active class to clicked button and corresponding content
+          button.classList.add('active');
+          document.getElementById(targetTab).classList.add('active');
+          
+          // Redraw diagrams when tab is switched
+          // Use setTimeout to ensure the tab content is visible before drawing
+          setTimeout(() => {
             try {
-                let filter;
-                let cutoffParam;
-
-                // Handle bandpass and bandstop filters that need frequency range
-                if (type === 'bandpass' || type === 'bandstop') {
-                    const lowFreq = parseFloat(document.getElementById('lowFreq').value);
-                    const highFreq = parseFloat(document.getElementById('highFreq').value);
-                    cutoffParam = [lowFreq, highFreq];
-                } else {
-                    cutoffParam = cutoff;
-                }
-
-                if (method === 'fir') {
-                    const windowType = document.getElementById('windowType').value;
-                    const windowParam = parseFloat(document.getElementById('windowParam').value);
-
-                    // Create window options for windows that need parameters
-                    let windowOptions = {};
-                    if (windowType === 'kaiser') {
-                        windowOptions.beta = windowParam;
-                    } else if (windowType === 'tukey') {
-                        windowOptions.alpha = windowParam;
-                    } else if (windowType === 'gauss') {
-                        windowOptions.sigma = windowParam;
-                    }
-
-                    filter = Filter.designFIR(type, cutoffParam, fs, order, windowType, windowOptions);
-                } else if (method === 'butterworth') {
-                    filter = Filter.designButter(type, cutoffParam, fs, order);
-                } else if (method === 'chebyshev1') {
-                    filter = Filter.designCheby1(type, cutoffParam, fs, order, passbandRipple);
-                } else if (method === 'chebyshev2') {
-                    filter = Filter.designCheby2(type, cutoffParam, fs, order, 40);
-                } else if (method === 'elliptic') {
-                    const stopbandAttenuation = parseFloat(document.getElementById('stopbandAttenuation').value);
-                    filter = Filter.designElliptic(type, cutoffParam, fs, order, passbandRipple, stopbandAttenuation);
-                } else if (method === 'bessel') {
-                    filter = Filter.designBessel(type, cutoffParam, fs, order);
-                } else if (method === 'linkwitz-riley') {
-                    filter = Filter.designLinkwitzRiley(type, cutoffParam, fs, order);
-                }
-
-                const coeffs = {
-                    b: filter.b.slice(0, Math.min(10, filter.b.length)),
-                    a: filter.a.slice(0, Math.min(10, filter.a.length))
-                };
-
-                const cutoffDisplay = Array.isArray(cutoffParam)
-                    ? `${cutoffParam[0].toFixed(1)} - ${cutoffParam[1].toFixed(1)} Hz`
-                    : `${cutoff} Hz`;
-
-                document.getElementById('filter-result').innerHTML = `
-                    <strong>Filter Design Results:</strong><br>
-                    Type: ${type.toUpperCase()}<br>
-                    Method: ${method.toUpperCase()}<br>
-                    Cutoff: ${cutoffDisplay}<br>
-                    Order: ${order}<br>
-                    b coefficients: [${coeffs.b.map(x => x.toFixed(6)).join(', ')}...]<br>
-                    a coefficients: [${coeffs.a.map(x => x.toFixed(6)).join(', ')}...]
-                `;
-
-                // Store current filter for coefficients analysis
-                currentFilter = filter;
-
-                analyzeFilterResponse(filter, fs);
+              // Use efficient redraw function if we have cached data
+              if (currentFilter && currentResponse && currentImpResp) {
+                redrawDiagrams();
+              } else if (typeof design === 'function') {
+                // Fallback to full design if no cached data
+                design();
+              }
             } catch (error) {
-                document.getElementById('filter-result').innerHTML = `<span class="status error">Error: ${error.message}</span>`;
+              console.log('Tab switch redraw skipped:', error.message);
             }
-        }
-
-        // Reset controls function
-        function resetControls() {
-            document.getElementById('filterType').value = 'lowpass';
-            document.getElementById('filterDesign').value = 'fir';
-            document.getElementById('samplingFreq').value = '44100';
-            document.getElementById('filterOrder').value = '64';
-            document.getElementById('filterOrder').max = '500'; // Set to FIR limits
-            document.getElementById('cutoffFreq').value = '1000';
-            document.getElementById('lowFreq').value = '500';
-            document.getElementById('highFreq').value = '2000';
-            document.getElementById('passbandRipple').value = '1';
-            document.getElementById('stopbandAttenuation').value = '40';
-            document.getElementById('windowType').value = 'hamming';
-            document.getElementById('windowParam').value = '8.6';
-
-            // Update display values
-            document.getElementById('samplingFreqValue').textContent = '44100';
-            document.getElementById('filterOrderValue').textContent = '64';
-            document.getElementById('cutoffFreqValue').textContent = '1000';
-            document.getElementById('passbandRippleValue').textContent = '1';
-            document.getElementById('stopbandAttenuationValue').textContent = '40';
-            document.getElementById('windowParamValue').textContent = '8.6';
-
-            // Hide band group, show window group for FIR, hide passband group
-            document.getElementById('bandGroup').style.display = 'none';
-            document.getElementById('cutoffGroup').style.display = 'block';
-            document.getElementById('windowGroup').style.display = 'block';
-            document.getElementById('windowParamsGroup').style.display = 'none';
-            document.getElementById('passbandRipple').parentElement.parentElement.style.display = 'none';
-            document.getElementById('stopbandAttenuationGroup').style.display = 'none';
-
-            // Clear results
-            document.getElementById('filter-result').innerHTML = '';
-            document.getElementById('errorMessage').style.display = 'none';
-        }
-
-        function analyzeFilterResponse(filter, fs) {
-            try {
-                // For highpass IIR filters, use custom calculation due to library issues
-                const type = document.getElementById('filterType').value;
-                const method = document.getElementById('filterDesign').value;
-
-                if (type === 'highpass' && method !== 'fir') {
-                    console.log('Using custom calculation for highpass IIR filter');
-                    calculateCustomFrequencyResponse(filter, fs);
-                    return;
-                }
-
-                // Try library's built-in method first for other filters
-                const response = filter.frequencyResponse(fs, 1024);
-                const frequencies = response.f;
-                const magnitudes = response.mag.map(mag => 20 * Math.log10(Math.max(mag, 1e-10)));
-                const phases = response.phase;
-
-                // Check if magnitudes are valid (not NaN or infinite)
-                if (magnitudes.some(m => !isFinite(m) || isNaN(m))) {
-                    throw new Error('Invalid magnitude values from library method');
-                }
-
-                // Update magnitude response chart
-                freqResponseChart.data.labels = frequencies.map(f => f.toFixed(1));
-                freqResponseChart.data.datasets = [{
-                    label: 'Magnitude Response',
-                    data: magnitudes,
-                    borderColor: 'rgb(75, 192, 192)',
-                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                    tension: 0.1
-                }];
-                freqResponseChart.update();
-
-                // Update phase response chart
-                phaseResponseChart.data.labels = frequencies.map(f => f.toFixed(1));
-                phaseResponseChart.data.datasets = [{
-                    label: 'Phase Response',
-                    data: phases,
-                    borderColor: 'rgb(255, 99, 132)',
-                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                    tension: 0.1
-                }];
-                phaseResponseChart.update();
-
-                // Calculate and display impulse response
-                calculateImpulseResponse(filter, fs);
-
-                // Calculate and display Z-plane
-                calculateZPlane(filter);
-
-            } catch (error) {
-                console.warn('Library method failed, using custom calculation:', error);
-                calculateCustomFrequencyResponse(filter, fs);
-            }
-        }
-
-        function calculateCustomFrequencyResponse(filter, fs) {
-            try {
-                const N = 1024;
-                const frequencies = [];
-                const magnitudes = [];
-                const phases = [];
-
-                for (let i = 0; i < N; i++) {
-                    const f = (i * fs) / (2 * N);
-                    const w = 2 * Math.PI * f / fs;
-                    const z = { re: Math.cos(w), im: Math.sin(w) };
-
-                    // Calculate H(z) = B(z)/A(z) using proper complex arithmetic
-                    let num = { re: 0, im: 0 };
-                    let den = { re: 0, im: 0 };
-
-                    // Calculate B(z) = sum(b[k] * z^(-k))
-                    for (let k = 0; k < filter.b.length; k++) {
-                        const zk = {
-                            re: Math.cos(-k * w),
-                            im: Math.sin(-k * w)
-                        };
-                        num = {
-                            re: num.re + filter.b[k] * zk.re,
-                            im: num.im + filter.b[k] * zk.im
-                        };
-                    }
-
-                    // Calculate A(z) = sum(a[k] * z^(-k))
-                    for (let k = 0; k < filter.a.length; k++) {
-                        const zk = {
-                            re: Math.cos(-k * w),
-                            im: Math.sin(-k * w)
-                        };
-                        den = {
-                            re: den.re + filter.a[k] * zk.re,
-                            im: den.im + filter.a[k] * zk.im
-                        };
-                    }
-
-                    // Calculate |H(z)| = |B(z)| / |A(z)|
-                    const numMag = Math.sqrt(num.re * num.re + num.im * num.im);
-                    const denMag = Math.sqrt(den.re * den.re + den.im * den.im);
-                    const mag = numMag / Math.max(denMag, 1e-10);
-
-                    // Calculate phase = arg(B(z)) - arg(A(z))
-                    const phase = Math.atan2(num.im, num.re) - Math.atan2(den.im, den.re);
-
-                    frequencies.push(f);
-                    magnitudes.push(20 * Math.log10(Math.max(mag, 1e-10)));
-                    phases.push(phase);
-                }
-
-                // Update magnitude response chart
-                freqResponseChart.data.labels = frequencies.map(f => f.toFixed(1));
-                freqResponseChart.data.datasets = [{
-                    label: 'Magnitude Response (Corrected)',
-                    data: magnitudes,
-                    borderColor: 'rgb(54, 162, 235)',
-                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                    tension: 0.1
-                }];
-                freqResponseChart.update();
-
-                // Update phase response chart
-                phaseResponseChart.data.labels = frequencies.map(f => f.toFixed(1));
-                phaseResponseChart.data.datasets = [{
-                    label: 'Phase Response (Corrected)',
-                    data: phases,
-                    borderColor: 'rgb(255, 99, 132)',
-                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                    tension: 0.1
-                }];
-                phaseResponseChart.update();
-
-                // Calculate and display impulse response
-                calculateImpulseResponse(filter, fs);
-
-                // Calculate and display Z-plane
-                calculateZPlane(filter);
-
-            } catch (customError) {
-                console.error('Custom calculation failed:', customError);
-                document.getElementById('filter-result').innerHTML = `<span class="status error">Error calculating frequency response: ${customError.message}</span>`;
-            }
-        }
-
-        function calculateImpulseResponse(filter, fs) {
-            try {
-                const N = 512; // Number of samples for impulse response
-                const impulse = new Array(N).fill(0);
-                impulse[0] = 1; // Unit impulse
-
-                // Apply filter to impulse
-                const response = filter.applySignal(impulse);
-
-                // Create time axis
-                const timeSamples = Array.from({ length: N }, (_, i) => i);
-
-                // Update impulse response chart
-                impulseResponseChart.data.labels = timeSamples;
-                impulseResponseChart.data.datasets = [{
-                    label: 'Impulse Response',
-                    data: response,
-                    borderColor: 'rgb(75, 192, 192)',
-                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                    tension: 0.1
-                }];
-                impulseResponseChart.update();
-
-            } catch (error) {
-                console.error('Error calculating impulse response:', error);
-            }
-        }
-
-        function calculateZPlane(filter) {
-            try {
-                // Calculate poles and zeros from filter coefficients
-                const poles = findRoots(filter.a);
-                const zeros = findRoots(filter.b);
-
-                // Create unit circle
-                const unitCircle = [];
-                for (let i = 0; i <= 100; i++) {
-                    const angle = (2 * Math.PI * i) / 100;
-                    unitCircle.push({
-                        x: Math.cos(angle),
-                        y: Math.sin(angle)
-                    });
-                }
-
-                // Prepare datasets
-                const datasets = [
-                    {
-                        label: 'Unit Circle',
-                        data: unitCircle,
-                        borderColor: 'rgb(128, 128, 128)',
-                        backgroundColor: 'rgba(128, 128, 128, 0.1)',
-                        pointRadius: 0,
-                        showLine: true,
-                        fill: false
-                    }
-                ];
-
-                // Add poles
-                if (poles.length > 0) {
-                    datasets.push({
-                        label: 'Poles',
-                        data: poles.map(p => ({ x: p.re, y: p.im })),
-                        borderColor: 'rgb(255, 0, 0)',
-                        backgroundColor: 'rgb(255, 0, 0)',
-                        pointRadius: 8,
-                        pointStyle: 'cross',
-                        showLine: false
-                    });
-                }
-
-                // Add zeros
-                if (zeros.length > 0) {
-                    datasets.push({
-                        label: 'Zeros',
-                        data: zeros.map(z => ({ x: z.re, y: z.im })),
-                        borderColor: 'rgb(0, 0, 255)',
-                        backgroundColor: 'rgb(0, 0, 255)',
-                        pointRadius: 6,
-                        pointStyle: 'circle',
-                        showLine: false
-                    });
-                }
-
-                // Update Z-plane chart
-                zplaneChart.data.datasets = datasets;
-                zplaneChart.update();
-
-            } catch (error) {
-                console.error('Error calculating Z-plane:', error);
-            }
-        }
-
-        function findRoots(coeffs) {
-            // Simple root finding for polynomials up to degree 4
-            const roots = [];
-
-            if (coeffs.length === 1) {
-                // Constant polynomial
-                return roots;
-            } else if (coeffs.length === 2) {
-                // Linear: ax + b = 0
-                const root = -coeffs[1] / coeffs[0];
-                roots.push({ re: root, im: 0 });
-            } else if (coeffs.length === 3) {
-                // Quadratic: ax² + bx + c = 0
-                const a = coeffs[0], b = coeffs[1], c = coeffs[2];
-                const discriminant = b * b - 4 * a * c;
-                if (discriminant >= 0) {
-                    const root1 = (-b + Math.sqrt(discriminant)) / (2 * a);
-                    const root2 = (-b - Math.sqrt(discriminant)) / (2 * a);
-                    roots.push({ re: root1, im: 0 });
-                    roots.push({ re: root2, im: 0 });
-                } else {
-                    const real = -b / (2 * a);
-                    const imag = Math.sqrt(-discriminant) / (2 * a);
-                    roots.push({ re: real, im: imag });
-                    roots.push({ re: real, im: -imag });
-                }
-            } else {
-                // For higher order polynomials, use numerical methods
-                // This is a simplified approach - for production use a proper root finder
-                const n = coeffs.length - 1;
-                for (let i = 0; i < n; i++) {
-                    // Use random initial guess for numerical root finding
-                    const guess = { re: Math.random() * 2 - 1, im: Math.random() * 2 - 1 };
-                    const root = newtonRaphson(coeffs, guess);
-                    if (root) roots.push(root);
-                }
-            }
-
-            return roots;
-        }
-
-        function newtonRaphson(coeffs, initialGuess, maxIterations = 100) {
-            let z = initialGuess;
-
-            for (let iter = 0; iter < maxIterations; iter++) {
-                const [f, df] = evaluatePolynomialAndDerivative(coeffs, z);
-                const magnitude = Math.sqrt(f.re * f.re + f.im * f.im);
-
-                if (magnitude < 1e-10) {
-                    return z; // Converged
-                }
-
-                // Newton-Raphson update: z_new = z - f(z)/f'(z)
-                const denominator = df.re * df.re + df.im * df.im;
-                if (denominator < 1e-10) break; // Avoid division by zero
-
-                const z_new = {
-                    re: z.re - (f.re * df.re + f.im * df.im) / denominator,
-                    im: z.im - (f.im * df.re - f.re * df.im) / denominator
-                };
-
-                z = z_new;
-            }
-
-            return null; // Did not converge
-        }
-
-        function evaluatePolynomialAndDerivative(coeffs, z) {
-            let f = { re: 0, im: 0 };
-            let df = { re: 0, im: 0 };
-
-            // Evaluate polynomial: f(z) = sum(coeffs[k] * z^k)
-            for (let k = 0; k < coeffs.length; k++) {
-                const zk = complexPower(z, k);
-                f.re += coeffs[k] * zk.re;
-                f.im += coeffs[k] * zk.im;
-
-                // Evaluate derivative: df/dz = sum(k * coeffs[k] * z^(k-1))
-                if (k > 0) {
-                    const zk_minus_1 = complexPower(z, k - 1);
-                    df.re += k * coeffs[k] * zk_minus_1.re;
-                    df.im += k * coeffs[k] * zk_minus_1.im;
-                }
-            }
-
-            return [f, df];
-        }
-
-        function complexPower(z, n) {
-            if (n === 0) return { re: 1, im: 0 };
-            if (n === 1) return { re: z.re, im: z.im };
-
-            // Use De Moivre's theorem: z^n = r^n * (cos(nθ) + i*sin(nθ))
-            const r = Math.sqrt(z.re * z.re + z.im * z.im);
-            const theta = Math.atan2(z.im, z.re);
-            const rn = Math.pow(r, n);
-            const nTheta = n * theta;
-
-            return {
-                re: rn * Math.cos(nTheta),
-                im: rn * Math.sin(nTheta)
-            };
-        }
-
-        function analyzeFilter() {
-            const type = document.getElementById('filter-type').value;
-            const method = document.getElementById('design-method').value;
-            const cutoff = parseFloat(document.getElementById('cutoff-freq').value);
-            const fs = parseFloat(document.getElementById('sample-rate').value);
-            const order = parseInt(document.getElementById('filter-order').value);
-
-            try {
-                const { Filter } = DSPFilterLibrary;
-                let filter;
-                let cutoffParam;
-
-                // Handle bandpass and bandstop filters that need frequency range
-                if (type === 'bandpass' || type === 'bandstop') {
-                    const lowFreq = parseFloat(document.getElementById('lowFreq').value);
-                    const highFreq = parseFloat(document.getElementById('highFreq').value);
-                    cutoffParam = [lowFreq, highFreq];
-                } else {
-                    cutoffParam = cutoff;
-                }
-
-                if (method === 'fir') {
-                    const windowType = document.getElementById('windowType').value;
-                    const windowParam = parseFloat(document.getElementById('windowParam').value);
-                    let windowOptions = {};
-                    if (windowType === 'kaiser') {
-                        windowOptions.beta = windowParam;
-                    } else if (windowType === 'tukey') {
-                        windowOptions.alpha = windowParam;
-                    } else if (windowType === 'gauss') {
-                        windowOptions.sigma = windowParam;
-                    }
-                    filter = Filter.designFIR(type, cutoffParam, fs, order, windowType, windowOptions);
-                } else if (method === 'butterworth') {
-                    filter = Filter.designButter(type, cutoffParam, fs, order);
-                } else if (method === 'cheby1') {
-                    filter = Filter.designCheby1(type, cutoffParam, fs, order, passbandRipple);
-                } else if (method === 'cheby2') {
-                    filter = Filter.designCheby2(type, cutoffParam, fs, order, 40);
-                } else if (method === 'linkwitz-riley') {
-                    filter = Filter.designLinkwitzRiley(type, cutoffParam, fs, order);
-                }
-
-                analyzeFilterResponse(filter, fs);
-                document.getElementById('filter-result').innerHTML = `
-                    <span class="status success">Filter analysis completed. Check the frequency response chart above.</span>
-                `;
-            } catch (error) {
-                document.getElementById('filter-result').innerHTML = `<span class="status error">Error: ${error.message}</span>`;
-            }
-        }
-
-        function testFilterAnalysis() {
-            const { Filter, Z } = DSPFilterLibrary;
-            const filter = Filter.designButter('lowpass', 1000, 44100, 4);
-            const response = filter.frequencyResponse(44100, 512);
-            const groupDelayResult = Z.groupDelay(filter.b, filter.a, 256);
-
-            const dcGain = response.mag[0];
-            const nyquistGain = response.mag[response.mag.length - 1];
-            const avgGroupDelay = groupDelayResult.gd.reduce((a, b) => a + b, 0) / groupDelayResult.gd.length;
-
-            document.getElementById('filter-result').innerHTML = `
-                <strong>Filter Analysis Results:</strong><br>
-                DC Gain: ${dcGain.toFixed(6)}<br>
-                Nyquist Gain: ${nyquistGain.toFixed(6)}<br>
-                Average Group Delay: ${avgGroupDelay.toFixed(3)} samples<br>
-                Filter Order: ${filter.b.length - 1}<br>
-                Stability: ${Z.isStable() ? 'Stable' : 'Unstable'}
-            `;
-        }
-
-        // Window Functions
-        function generateWindow() {
-            const { Window } = DSPFilterLibrary;
-            const length = parseInt(document.getElementById('windowLength').value);
-            const type = document.getElementById('windowSelect').value;
-
-            const window = Window.byName(type, length);
-
-            windowChart.data.labels = Array.from({ length }, (_, i) => i);
-            windowChart.data.datasets = [{
-                label: `${type} Window (N=${length})`,
-                data: window,
-                borderColor: 'rgb(255, 99, 132)',
-                backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                tension: 0.1
-            }];
-            windowChart.update();
-
-            document.getElementById('window-result').innerHTML = `
-                <strong>Window Function Generated:</strong><br>
-                Type: ${type}<br>
-                Length: ${length}<br>
-                First 5 values: [${window.slice(0, 5).map(x => x.toFixed(6)).join(', ')}...]
-            `;
-        }
-
-        function compareWindows() {
-            const { Window } = DSPFilterLibrary;
-            const length = parseInt(document.getElementById('windowLength').value);
-            const windows = ['hann', 'hamming', 'blackman', 'kaiser'];
-            const colors = ['rgb(255, 99, 132)', 'rgb(54, 162, 235)', 'rgb(255, 205, 86)', 'rgb(75, 192, 192)'];
-
-            windowChart.data.labels = Array.from({ length }, (_, i) => i);
-            windowChart.data.datasets = windows.map((type, i) => ({
-                label: type,
-                data: Window.byName(type, length),
-                borderColor: colors[i],
-                backgroundColor: colors[i] + '20',
-                tension: 0.1
-            }));
-            windowChart.update();
-        }
-
-        // FFT Analysis
-        function generateFFTSignal() {
-            const freq1 = parseFloat(document.getElementById('fftFreq1').value);
-            const freq2 = parseFloat(document.getElementById('fftFreq2').value);
-            const amp1 = parseFloat(document.getElementById('fftAmp1').value);
-            const amp2 = parseFloat(document.getElementById('fftAmp2').value);
-            const length = parseInt(document.getElementById('fftLength').value);
-            const fs = 44100;
-
-            const signal = Array.from({ length }, (_, n) => {
-                const t = n / fs;
-                return amp1 * Math.sin(2 * Math.PI * freq1 * t) + amp2 * Math.sin(2 * Math.PI * freq2 * t);
-            });
-
-            fftChart.data.labels = Array.from({ length }, (_, i) => i);
-            fftChart.data.datasets = [{
-                label: 'Generated Signal',
-                data: signal,
-                borderColor: 'rgb(255, 99, 132)',
-                backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                tension: 0.1
-            }];
-            fftChart.update();
-
-            return signal;
-        }
-
-        function performFFTAnalysis() {
-            const { FFT } = DSPFilterLibrary;
-            const signal = generateFFTSignal();
-            const fftResult = FFT.rfft(signal);
-            const fs = 44100;
-            const N = signal.length;
-            const frequencies = Array.from({ length: N / 2 }, (_, i) => i * fs / N);
-            const magnitudes = fftResult.slice(0, N / 2).map(c => Math.sqrt(c.re * c.re + c.im * c.im));
-
-            fftChart.data.labels = frequencies.map(f => f.toFixed(1));
-            fftChart.data.datasets = [{
-                label: 'FFT Magnitude',
-                data: magnitudes,
-                borderColor: 'rgb(54, 162, 235)',
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                tension: 0.1
-            }];
-            fftChart.update();
-
-            document.getElementById('fft-result').innerHTML = `
-                <strong>FFT Analysis:</strong><br>
-                Signal length: ${signal.length}<br>
-                FFT bins: ${fftResult.length}<br>
-                Frequency resolution: ${(fs / N).toFixed(2)} Hz<br>
-                Peak frequencies: ${frequencies[magnitudes.indexOf(Math.max(...magnitudes))].toFixed(1)} Hz
-            `;
-        }
-
-        function performIFFTAnalysis() {
-            const { FFT } = DSPFilterLibrary;
-            const signal = generateFFTSignal();
-            const fftResult = FFT.rfft(signal);
-            const ifftResult = FFT.irfft(fftResult);
-
-            fftChart.data.labels = Array.from({ length: signal.length }, (_, i) => i);
-            fftChart.data.datasets = [{
-                label: 'Original Signal',
-                data: signal,
-                borderColor: 'rgb(255, 99, 132)',
-                backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                tension: 0.1
-            }, {
-                label: 'IFFT Result',
-                data: ifftResult,
-                borderColor: 'rgb(54, 162, 235)',
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                tension: 0.1
-            }];
-            fftChart.update();
-
-            document.getElementById('fft-result').innerHTML = `
-                <strong>IFFT Analysis:</strong><br>
-                Original signal length: ${signal.length}<br>
-                IFFT result length: ${ifftResult.length}<br>
-                Reconstruction error: ${Math.max(...signal.map((s, i) => Math.abs(s - ifftResult[i]))).toFixed(6)}
-            `;
-        }
-
-        // Coefficients Analysis
-        function plotCoefficients() {
-            if (!currentFilter) {
-                document.getElementById('coefficients-result').innerHTML = '<span class="status error">No filter designed yet. Please design a filter first.</span>';
-                return;
-            }
-
-            const displayType = document.getElementById('coeffDisplayType').value;
-            const maxLength = parseInt(document.getElementById('coeffMaxLength').value);
-
-            try {
-                const bCoeffs = currentFilter.b.slice(0, maxLength);
-                const aCoeffs = currentFilter.a.slice(0, maxLength);
-
-                // Create labels for coefficient indices
-                const labels = Array.from({ length: Math.max(bCoeffs.length, aCoeffs.length) }, (_, i) => i);
-
-                if (displayType === 'table') {
-                    displayCoefficientsTable(bCoeffs, aCoeffs);
-                } else {
-                    displayCoefficientsChart(bCoeffs, aCoeffs, labels, displayType);
-                }
-
-                // Update result display
-                document.getElementById('coefficients-result').innerHTML = `
-                    <strong>Coefficients Analysis:</strong><br>
-                    b coefficients (numerator): ${bCoeffs.length} values<br>
-                    a coefficients (denominator): ${aCoeffs.length} values<br>
-                    b[0] = ${bCoeffs[0] ? bCoeffs[0].toFixed(6) : 'N/A'}<br>
-                    a[0] = ${aCoeffs[0] ? aCoeffs[0].toFixed(6) : 'N/A'}<br>
-                    Max |b|: ${Math.max(...bCoeffs.map(Math.abs)).toFixed(6)}<br>
-                    Max |a|: ${Math.max(...aCoeffs.map(Math.abs)).toFixed(6)}<br>
-                    <br>
-                    <button class="btn btn-primary" onclick="showAllCoefficients()" style="margin-top: 10px;">Show All Coefficients</button>
-                `;
-
-                // Update the text area with default format
-                updateCoefficientsText();
-
-            } catch (error) {
-                document.getElementById('coefficients-result').innerHTML = `<span class="status error">Error plotting coefficients: ${error.message}</span>`;
-            }
-        }
-
-        function displayCoefficientsChart(bCoeffs, aCoeffs, labels, displayType) {
-            const chartType = displayType === 'line' ? 'line' : 'bar';
-
-            // Show the chart and hide any existing table
-            document.getElementById('coefficientsChart').style.display = 'block';
-            const tableContainer = document.getElementById('coefficientsTable');
-            if (tableContainer) {
-                tableContainer.style.display = 'none';
-            }
-
-            // Update chart type if needed
-            if (coefficientsChart.config.type !== chartType) {
-                coefficientsChart.destroy();
-                const coeffCtx = document.getElementById('coefficientsChart').getContext('2d');
-                coefficientsChart = new Chart(coeffCtx, {
-                    type: chartType,
-                    data: { labels: [], datasets: [] },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            x: { title: { display: true, text: 'Coefficient Index' } },
-                            y: { title: { display: true, text: 'Value' } }
-                        },
-                        plugins: {
-                            legend: {
-                                display: true,
-                                position: 'top'
-                            }
-                        }
-                    }
-                });
-            }
-
-            coefficientsChart.data.labels = labels;
-            coefficientsChart.data.datasets = [
-                {
-                    label: 'b coefficients (numerator)',
-                    data: bCoeffs,
-                    borderColor: 'rgb(255, 99, 132)',
-                    backgroundColor: 'rgba(255, 99, 132, 0.6)',
-                    tension: 0.1
-                },
-                {
-                    label: 'a coefficients (denominator)',
-                    data: aCoeffs,
-                    borderColor: 'rgb(54, 162, 235)',
-                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                    tension: 0.1
-                }
-            ];
-            coefficientsChart.update();
-        }
-
-        function displayCoefficientsTable(bCoeffs, aCoeffs) {
-            const maxLength = Math.max(bCoeffs.length, aCoeffs.length);
-            let tableHTML = `
-                <div style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 5px;">
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead style="background: #f8f9fa; position: sticky; top: 0;">
-                            <tr>
-                                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Index</th>
-                                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">b[n] (numerator)</th>
-                                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">a[n] (denominator)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
-
-            for (let i = 0; i < maxLength; i++) {
-                const bVal = i < bCoeffs.length ? bCoeffs[i].toFixed(6) : 'N/A';
-                const aVal = i < aCoeffs.length ? aCoeffs[i].toFixed(6) : 'N/A';
-                const rowStyle = i % 2 === 0 ? 'background: #f8f9fa;' : '';
-
-                tableHTML += `
-                    <tr style="${rowStyle}">
-                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${i}</td>
-                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${bVal}</td>
-                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${aVal}</td>
-                    </tr>
-                `;
-            }
-
-            tableHTML += `
-                        </tbody>
-                    </table>
-                </div>
-            `;
-
-            // Hide the chart and show table
-            document.getElementById('coefficientsChart').style.display = 'none';
-
-            // Create or update table container
-            let tableContainer = document.getElementById('coefficientsTable');
-            if (!tableContainer) {
-                tableContainer = document.createElement('div');
-                tableContainer.id = 'coefficientsTable';
-                document.querySelector('#coefficientsTab .plot-canvas').appendChild(tableContainer);
-            }
-            tableContainer.style.display = 'block';
-            tableContainer.innerHTML = tableHTML;
-        }
-
-        function exportCoefficients() {
-            if (!currentFilter) {
-                alert('No filter designed yet. Please design a filter first.');
-                return;
-            }
-
-            const bCoeffs = currentFilter.b;
-            const aCoeffs = currentFilter.a;
-            const maxLength = Math.max(bCoeffs.length, aCoeffs.length);
-
-            // Create CSV content
-            let csvContent = 'Index,b_coefficients,a_coefficients\n';
-            for (let i = 0; i < maxLength; i++) {
-                const bVal = i < bCoeffs.length ? bCoeffs[i] : '';
-                const aVal = i < aCoeffs.length ? aCoeffs[i] : '';
-                csvContent += `${i},${bVal},${aVal}\n`;
-            }
-
-            // Create and download file
-            const blob = new Blob([csvContent], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'filter_coefficients.csv';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-
-            document.getElementById('coefficients-result').innerHTML += `
-                <br><span class="status success">Coefficients exported to filter_coefficients.csv</span>
-            `;
-        }
-
-        // All Coefficients Display Functions
-        function showAllCoefficients() {
-            if (!currentFilter) {
-                alert('No filter designed yet. Please design a filter first.');
-                return;
-            }
-
-            const bCoeffs = currentFilter.b;
-            const aCoeffs = currentFilter.a;
-            const maxLength = Math.max(bCoeffs.length, aCoeffs.length);
-
-            // Create comprehensive display
-            let displayHTML = `
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
-                    <div>
-                        <h4 style="color: #e74c3c; margin-bottom: 10px;">b coefficients (numerator)</h4>
-                        <div style="font-family: 'Courier New', monospace; font-size: 0.9em; background: white; padding: 10px; border-radius: 5px; border: 1px solid #ddd;">
-                            <div style="margin-bottom: 5px;"><strong>Length:</strong> ${bCoeffs.length}</div>
-                            <div style="margin-bottom: 5px;"><strong>Max |b|:</strong> ${Math.max(...bCoeffs.map(Math.abs)).toFixed(6)}</div>
-                            <div style="margin-bottom: 10px;"><strong>Sum:</strong> ${bCoeffs.reduce((a, b) => a + b, 0).toFixed(6)}</div>
-                            <div style="word-break: break-all; line-height: 1.4;">
-                                [${bCoeffs.map(x => x.toFixed(6)).join(', ')}]
-                            </div>
-                        </div>
-                    </div>
-                    <div>
-                        <h4 style="color: #3498db; margin-bottom: 10px;">a coefficients (denominator)</h4>
-                        <div style="font-family: 'Courier New', monospace; font-size: 0.9em; background: white; padding: 10px; border-radius: 5px; border: 1px solid #ddd;">
-                            <div style="margin-bottom: 5px;"><strong>Length:</strong> ${aCoeffs.length}</div>
-                            <div style="margin-bottom: 5px;"><strong>Max |a|:</strong> ${Math.max(...aCoeffs.map(Math.abs)).toFixed(6)}</div>
-                            <div style="margin-bottom: 10px;"><strong>Sum:</strong> ${aCoeffs.reduce((a, b) => a + b, 0).toFixed(6)}</div>
-                            <div style="word-break: break-all; line-height: 1.4;">
-                                [${aCoeffs.map(x => x.toFixed(6)).join(', ')}]
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div style="margin-bottom: 20px;">
-                    <h4 style="color: #2c3e50; margin-bottom: 10px;">Detailed Coefficient Table</h4>
-                    <div style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 5px;">
-                        <table style="width: 100%; border-collapse: collapse; font-family: 'Courier New', monospace; font-size: 0.85em;">
-                            <thead style="background: #34495e; color: white; position: sticky; top: 0;">
-                                <tr>
-                                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center; width: 60px;">Index</th>
-                                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center; width: 120px;">b[n] (numerator)</th>
-                                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center; width: 120px;">a[n] (denominator)</th>
-                                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center; width: 100px;">|b[n]|</th>
-                                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center; width: 100px;">|a[n]|</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-            `;
-
-            for (let i = 0; i < maxLength; i++) {
-                const bVal = i < bCoeffs.length ? bCoeffs[i] : 0;
-                const aVal = i < aCoeffs.length ? aCoeffs[i] : 0;
-                const bAbs = Math.abs(bVal);
-                const aAbs = Math.abs(aVal);
-                const rowStyle = i % 2 === 0 ? 'background: #f8f9fa;' : 'background: white;';
-
-                displayHTML += `
-                    <tr style="${rowStyle}">
-                        <td style="border: 1px solid #ddd; padding: 6px; text-align: center; font-weight: bold;">${i}</td>
-                        <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${i < bCoeffs.length ? bVal.toFixed(6) : 'N/A'}</td>
-                        <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${i < aCoeffs.length ? aVal.toFixed(6) : 'N/A'}</td>
-                        <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${i < bCoeffs.length ? bAbs.toFixed(6) : 'N/A'}</td>
-                        <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${i < aCoeffs.length ? aAbs.toFixed(6) : 'N/A'}</td>
-                    </tr>
-                `;
-            }
-
-            displayHTML += `
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                
-                <div style="background: #e8f4fd; border: 1px solid #3498db; border-radius: 5px; padding: 15px; margin-top: 15px;">
-                    <h4 style="color: #2c3e50; margin-bottom: 10px;">Filter Information</h4>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-family: 'Courier New', monospace; font-size: 0.9em;">
-                        <div>
-                            <strong>Filter Type:</strong> ${document.getElementById('filterType').value.toUpperCase()}<br>
-                            <strong>Filter Design:</strong> ${document.getElementById('filterDesign').value.toUpperCase()}<br>
-                            <strong>Order:</strong> ${document.getElementById('filterOrder').value}<br>
-                            <strong>Sampling Frequency:</strong> ${document.getElementById('samplingFreq').value} Hz
-                        </div>
-                        <div>
-                            <strong>Total Coefficients:</strong> ${bCoeffs.length + aCoeffs.length}<br>
-                            <strong>Filter Length:</strong> ${Math.max(bCoeffs.length, aCoeffs.length)}<br>
-                            <strong>DC Gain:</strong> ${(bCoeffs[0] / aCoeffs[0]).toFixed(6)}<br>
-                            <strong>Stability:</strong> ${aCoeffs.every(a => Math.abs(a) < 1e10) ? 'Stable' : 'Check Required'}
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            // Update display
-            document.getElementById('allCoefficientsDisplay').innerHTML = displayHTML;
-            document.getElementById('allCoefficientsSection').style.display = 'block';
-
-            // Update the text area with default format
-            updateCoefficientsText();
-        }
-
-        function hideAllCoefficients() {
-            document.getElementById('allCoefficientsSection').style.display = 'none';
-        }
-
-        function copyAllCoefficients() {
-            if (!currentFilter) {
-                alert('No filter designed yet. Please design a filter first.');
-                return;
-            }
-
-            const bCoeffs = currentFilter.b;
-            const aCoeffs = currentFilter.a;
-            const maxLength = Math.max(bCoeffs.length, aCoeffs.length);
-
-            // Create text content for clipboard
-            let textContent = `Filter Coefficients\n`;
-            textContent += `==================\n\n`;
-            textContent += `Filter Type: ${document.getElementById('filterType').value.toUpperCase()}\n`;
-            textContent += `Filter Design: ${document.getElementById('filterDesign').value.toUpperCase()}\n`;
-            textContent += `Order: ${document.getElementById('filterOrder').value}\n`;
-            textContent += `Sampling Frequency: ${document.getElementById('samplingFreq').value} Hz\n\n`;
-
-            textContent += `b coefficients (numerator):\n`;
-            textContent += `[${bCoeffs.map(x => x.toFixed(6)).join(', ')}]\n\n`;
-
-            textContent += `a coefficients (denominator):\n`;
-            textContent += `[${aCoeffs.map(x => x.toFixed(6)).join(', ')}]\n\n`;
-
-            textContent += `Detailed Table:\n`;
-            textContent += `Index\tb[n]\t\t\ta[n]\n`;
-            textContent += `-----\t---\t\t\t---\n`;
-            for (let i = 0; i < maxLength; i++) {
-                const bVal = i < bCoeffs.length ? bCoeffs[i].toFixed(6) : 'N/A';
-                const aVal = i < aCoeffs.length ? aCoeffs[i].toFixed(6) : 'N/A';
-                textContent += `${i}\t\t${bVal}\t\t${aVal}\n`;
-            }
-
-            // Copy to clipboard
-            navigator.clipboard.writeText(textContent).then(() => {
-                document.getElementById('coefficients-result').innerHTML += `
-                    <br><span class="status success">All coefficients copied to clipboard!</span>
-                `;
-            }).catch(err => {
-                // Fallback for older browsers
-                const textArea = document.createElement('textarea');
-                textArea.value = textContent;
-                document.body.appendChild(textArea);
-                textArea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textArea);
-
-                document.getElementById('coefficients-result').innerHTML += `
-                    <br><span class="status success">All coefficients copied to clipboard!</span>
-                `;
-            });
-        }
-
-        // Multiline Text Input Functions
-        function updateCoefficientsText() {
-            if (!currentFilter) {
-                document.getElementById('coefficientsTextArea').value = 'No filter designed yet. Please design a filter first.';
-                return;
-            }
-
-            const format = document.getElementById('coefficientsTextFormat').value;
-            const bCoeffs = currentFilter.b;
-            const aCoeffs = currentFilter.a;
-            const maxLength = Math.max(bCoeffs.length, aCoeffs.length);
-
-            let textContent = '';
-
-            switch (format) {
-                case 'arrays':
-                    textContent = generateJavaScriptArrays(bCoeffs, aCoeffs);
-                    break;
-                case 'matlab':
-                    textContent = generateMATLABFormat(bCoeffs, aCoeffs);
-                    break;
-                case 'python':
-                    textContent = generatePythonFormat(bCoeffs, aCoeffs);
-                    break;
-                case 'csv':
-                    textContent = generateCSVFormat(bCoeffs, aCoeffs);
-                    break;
-                case 'table':
-                    textContent = generateTableFormat(bCoeffs, aCoeffs);
-                    break;
-                case 'raw':
-                    textContent = generateRawFormat(bCoeffs, aCoeffs);
-                    break;
-                default:
-                    textContent = 'Unknown format selected.';
-            }
-
-            document.getElementById('coefficientsTextArea').value = textContent;
-        }
-
-        function generateJavaScriptArrays(bCoeffs, aCoeffs) {
-            let content = `// Filter Coefficients - JavaScript Arrays\n`;
-            content += `// Filter: ${document.getElementById('filterType').value.toUpperCase()} ${document.getElementById('filterDesign').value.toUpperCase()}\n`;
-            content += `// Order: ${document.getElementById('filterOrder').value}, Fs: ${document.getElementById('samplingFreq').value} Hz\n\n`;
-
-            content += `const b = [\n`;
-            content += `    ${bCoeffs.map(x => x.toFixed(6)).join(',\n    ')}\n`;
-            content += `];\n\n`;
-
-            content += `const a = [\n`;
-            content += `    ${aCoeffs.map(x => x.toFixed(6)).join(',\n    ')}\n`;
-            content += `];\n\n`;
-
-            content += `// Usage example:\n`;
-            content += `// const filter = new Filter(b, a);\n`;
-            content += `// const output = filter.applySignal(input);\n`;
-
-            return content;
-        }
-
-        function generateMATLABFormat(bCoeffs, aCoeffs) {
-            let content = `% Filter Coefficients - MATLAB Format\n`;
-            content += `% Filter: ${document.getElementById('filterType').value.toUpperCase()} ${document.getElementById('filterDesign').value.toUpperCase()}\n`;
-            content += `% Order: ${document.getElementById('filterOrder').value}, Fs: ${document.getElementById('samplingFreq').value} Hz\n\n`;
-
-            content += `b = [${bCoeffs.map(x => x.toFixed(6)).join(', ')}];\n`;
-            content += `a = [${aCoeffs.map(x => x.toFixed(6)).join(', ')}];\n\n`;
-
-            content += `% Usage example:\n`;
-            content += `% y = filter(b, a, x);\n`;
-            content += `% [H, w] = freqz(b, a, 1024);\n`;
-
-            return content;
-        }
-
-        function generatePythonFormat(bCoeffs, aCoeffs) {
-            let content = `# Filter Coefficients - Python Format\n`;
-            content += `# Filter: ${document.getElementById('filterType').value.toUpperCase()} ${document.getElementById('filterDesign').value.toUpperCase()}\n`;
-            content += `# Order: ${document.getElementById('filterOrder').value}, Fs: ${document.getElementById('samplingFreq').value} Hz\n\n`;
-
-            content += `import numpy as np\n`;
-            content += `from scipy import signal\n\n`;
-
-            content += `b = np.array([\n`;
-            content += `    ${bCoeffs.map(x => x.toFixed(6)).join(',\n    ')}\n`;
-            content += `])\n\n`;
-
-            content += `a = np.array([\n`;
-            content += `    ${aCoeffs.map(x => x.toFixed(6)).join(',\n    ')}\n`;
-            content += `])\n\n`;
-
-            content += `# Usage example:\n`;
-            content += `# y = signal.lfilter(b, a, x)\n`;
-            content += `# w, h = signal.freqz(b, a, worN=1024)\n`;
-
-            return content;
-        }
-
-        function generateCSVFormat(bCoeffs, aCoeffs) {
-            let content = `Index,b_coefficients,a_coefficients\n`;
-            const maxLength = Math.max(bCoeffs.length, aCoeffs.length);
-
-            for (let i = 0; i < maxLength; i++) {
-                const bVal = i < bCoeffs.length ? bCoeffs[i].toFixed(6) : '';
-                const aVal = i < aCoeffs.length ? aCoeffs[i].toFixed(6) : '';
-                content += `${i},${bVal},${aVal}\n`;
-            }
-
-            return content;
-        }
-
-        function generateTableFormat(bCoeffs, aCoeffs) {
-            let content = `Filter Coefficients Table\n`;
-            content += `========================\n\n`;
-            content += `Filter: ${document.getElementById('filterType').value.toUpperCase()} ${document.getElementById('filterDesign').value.toUpperCase()}\n`;
-            content += `Order: ${document.getElementById('filterOrder').value}\n`;
-            content += `Sampling Frequency: ${document.getElementById('samplingFreq').value} Hz\n\n`;
-
-            content += `Index | b[n] (numerator) | a[n] (denominator)\n`;
-            content += `------|------------------|-------------------\n`;
-
-            const maxLength = Math.max(bCoeffs.length, aCoeffs.length);
-            for (let i = 0; i < maxLength; i++) {
-                const bVal = i < bCoeffs.length ? bCoeffs[i].toFixed(6) : 'N/A';
-                const aVal = i < aCoeffs.length ? aCoeffs[i].toFixed(6) : 'N/A';
-                content += `${i.toString().padStart(5)} | ${bVal.padStart(16)} | ${aVal.padStart(17)}\n`;
-            }
-
-            return content;
-        }
-
-        function generateRawFormat(bCoeffs, aCoeffs) {
-            let content = `Raw Filter Coefficients\n`;
-            content += `======================\n\n`;
-            content += `b coefficients (numerator):\n`;
-            content += `${bCoeffs.map(x => x.toFixed(6)).join(' ')}\n\n`;
-
-            content += `a coefficients (denominator):\n`;
-            content += `${aCoeffs.map(x => x.toFixed(6)).join(' ')}\n`;
-
-            return content;
-        }
-
-        function copyCoefficientsText() {
-            const textArea = document.getElementById('coefficientsTextArea');
-            textArea.select();
-            document.execCommand('copy');
-
-            document.getElementById('coefficients-result').innerHTML += `
-                <br><span class="status success">Coefficients text copied to clipboard!</span>
-            `;
-        }
-
-        function downloadCoefficientsText() {
-            if (!currentFilter) {
-                alert('No filter designed yet. Please design a filter first.');
-                return;
-            }
-
-            const textContent = document.getElementById('coefficientsTextArea').value;
-            const format = document.getElementById('coefficientsTextFormat').value;
-            const filterType = document.getElementById('filterType').value;
-            const filterDesign = document.getElementById('filterDesign').value;
-
-            let filename = `filter_coefficients_${filterType}_${filterDesign}`;
-            let extension = 'txt';
-
-            if (format === 'csv') {
-                extension = 'csv';
-            } else if (format === 'matlab') {
-                extension = 'm';
-            } else if (format === 'python') {
-                extension = 'py';
-            }
-
-            const blob = new Blob([textContent], { type: 'text/plain' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${filename}.${extension}`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-
-            document.getElementById('coefficients-result').innerHTML += `
-                <br><span class="status success">Coefficients downloaded as ${filename}.${extension}</span>
-            `;
-        }
-
-        function clearCoefficientsText() {
-            document.getElementById('coefficientsTextArea').value = '';
-        }
-
-        // Audio Processing
-        function startAudioProcessing() {
-            if (isAudioActive) return;
-
-            try {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const { Filter } = DSPFilterLibrary;
-
-                // Check if audio controls exist, use defaults if not
-                const audioCutoffEl = document.getElementById('audio-cutoff');
-                const audioOrderEl = document.getElementById('audio-order');
-                const audioFilterTypeEl = document.getElementById('audio-filter-type');
-
-                const cutoff = audioCutoffEl ? parseFloat(audioCutoffEl.value) : 1000;
-                const order = audioOrderEl ? parseInt(audioOrderEl.value) : 4;
-                const type = audioFilterTypeEl ? audioFilterTypeEl.value : 'lowpass';
-
-                audioFilter = Filter.designButter(type, cutoff, 44100, order);
-
-                navigator.mediaDevices.getUserMedia({ audio: true })
-                    .then(stream => {
-                        const source = audioContext.createMediaStreamSource(stream);
-                        const processor = audioContext.createScriptProcessor(4096, 1, 1);
-
-                        processor.onaudioprocess = (event) => {
-                            const inputBuffer = event.inputBuffer.getChannelData(0);
-                            const outputBuffer = event.outputBuffer.getChannelData(0);
-
-                            for (let i = 0; i < inputBuffer.length; i++) {
-                                outputBuffer[i] = audioFilter.processSample(inputBuffer[i]);
-                            }
-
-                            // Update visualization
-                            updateAudioVisualization(inputBuffer.slice(0, 100));
-                        };
-
-                        source.connect(processor);
-                        processor.connect(audioContext.destination);
-
-                        isAudioActive = true;
-                        const startBtn = document.getElementById('start-audio');
-                        const stopBtn = document.getElementById('stop-audio');
-                        const statusEl = document.getElementById('audio-status');
-
-                        if (startBtn) startBtn.disabled = true;
-                        if (stopBtn) stopBtn.disabled = false;
-                        if (statusEl) statusEl.innerHTML = '<span class="status success">Audio processing active</span>';
-                    })
-                    .catch(error => {
-                        const statusEl = document.getElementById('audio-status');
-                        if (statusEl) statusEl.innerHTML = `<span class="status error">Error: ${error.message}</span>`;
-                    });
-            } catch (error) {
-                const statusEl = document.getElementById('audio-status');
-                if (statusEl) statusEl.innerHTML = `<span class="status error">Error: ${error.message}</span>`;
-            }
-        }
-
-        function stopAudioProcessing() {
-            if (audioContext) {
-                audioContext.close();
-                audioContext = null;
-            }
-            isAudioActive = false;
-            const startBtn = document.getElementById('start-audio');
-            const stopBtn = document.getElementById('stop-audio');
-            const statusEl = document.getElementById('audio-status');
-
-            if (startBtn) startBtn.disabled = false;
-            if (stopBtn) stopBtn.disabled = true;
-            if (statusEl) statusEl.innerHTML = '<span class="status info">Audio processing stopped</span>';
-        }
-
-        function updateAudioVisualization(data) {
-            // Audio visualization removed as audioChart is not available
-            console.log('Audio data received:', data.length, 'samples');
-        }
-
-        // Advanced Signal Processing
-        function testConvolution() {
-            const { Util } = DSPFilterLibrary;
-            const signal = [1, 2, 3, 4, 5];
-            const kernel = [0.5, 0.5];
-            const result = Util.convolve(signal, kernel);
-
-            document.getElementById('processing-result').innerHTML = `
-                <strong>Convolution Test:</strong><br>
-                Signal: [${signal.join(', ')}]<br>
-                Kernel: [${kernel.join(', ')}]<br>
-                Result: [${result.map(x => x.toFixed(3)).join(', ')}]
-            `;
-        }
-
-        function testOverlapAdd() {
-            const { FIRDesigner } = DSPFilterLibrary;
-            const signal = Array.from({ length: 1000 }, (_, i) => Math.sin(2 * Math.PI * i / 100));
-            const filter = [0.25, 0.5, 0.25];
-            const result = FIRDesigner.overlapAdd(filter, signal, 256);
-
-            document.getElementById('processing-result').innerHTML += `
-                <br><strong>Overlap-Add Test:</strong><br>
-                Signal length: ${signal.length}<br>
-                Filter length: ${filter.length}<br>
-                Result length: ${result.length}<br>
-                First 5 result values: [${result.slice(0, 5).map(x => x.toFixed(3)).join(', ')}...]
-            `;
-        }
-
-        function testGroupDelay() {
-            const { Z } = DSPFilterLibrary;
-            const b = [0.25, 0.5, 0.25];
-            const a = [1, 0, 0];
-            const groupDelayResult = Z.groupDelay(b, a, 512);
-
-            document.getElementById('processing-result').innerHTML += `
-                <br><strong>Group Delay Test:</strong><br>
-                Group delay calculated for ${groupDelayResult.gd.length} frequency points<br>
-                Average group delay: ${(groupDelayResult.gd.reduce((a, b) => a + b, 0) / groupDelayResult.gd.length).toFixed(3)} samples<br>
-                Frequency range: ${(groupDelayResult.w[0] * 44100 / (2 * Math.PI)).toFixed(1)} - ${(groupDelayResult.w[groupDelayResult.w.length - 1] * 44100 / (2 * Math.PI)).toFixed(1)} Hz
-            `;
-        }
-
-        function testAllFeatures() {
-            document.getElementById('processing-result').innerHTML = '<span class="status info">Running comprehensive tests...</span>';
-
-            setTimeout(() => {
-                testConvolution();
-                testOverlapAdd();
-                testGroupDelay();
-
-                document.getElementById('processing-result').innerHTML += `
-                    <br><span class="status success">All tests completed successfully!</span>
-                `;
-            }, 1000);
-        }
-
-        // Event Listeners
-        document.addEventListener('DOMContentLoaded', function () {
-            console.log('DOM loaded, initializing...');
-
-            // Wait a bit to ensure all elements are rendered
-            setTimeout(function () {
-                initCharts();
-                initializeControls();
-
-                // Design initial filter
-                designFilter();
-            }, 100);
-
-            // Event listeners for window and FFT controls are handled by inline oninput handlers
-
-            // Audio controls - check if elements exist before adding listeners
-            const audioCutoff = document.getElementById('audio-cutoff');
-            if (audioCutoff) {
-                audioCutoff.addEventListener('input', function () {
-                    const display = document.getElementById('audio-cutoff-display');
-                    if (display) display.textContent = this.value + ' Hz';
-                });
-            }
-
-            const audioOrder = document.getElementById('audio-order');
-            if (audioOrder) {
-                audioOrder.addEventListener('input', function () {
-                    const display = document.getElementById('audio-order-display');
-                    if (display) display.textContent = this.value;
-                });
-            }
-
-            // Filter type change handler
-            document.getElementById('filterType').addEventListener('change', function () {
-                const bandGroup = document.getElementById('bandGroup');
-                const cutoffGroup = document.getElementById('cutoffGroup');
-
-                if (this.value === 'bandpass' || this.value === 'bandstop') {
-                    if (bandGroup) bandGroup.style.display = 'block';
-                    if (cutoffGroup) cutoffGroup.style.display = 'none';
-                } else {
-                    if (bandGroup) bandGroup.style.display = 'none';
-                    if (cutoffGroup) cutoffGroup.style.display = 'block';
-                }
-            });
-
-            // Bandwidth input handlers are handled by inline oninput handlers in the HTML
-
-            // Audio controls
-            // Audio button event listeners - check if elements exist
-            const startAudioBtn = document.getElementById('start-audio');
-            if (startAudioBtn) {
-                startAudioBtn.addEventListener('click', startAudioProcessing);
-            }
-
-            const stopAudioBtn = document.getElementById('stop-audio');
-            if (stopAudioBtn) {
-                stopAudioBtn.addEventListener('click', stopAudioProcessing);
-            }
-
-            console.log('DSP Filter Library Advanced Demo loaded successfully!');
-            console.log('Available classes:', Object.keys(DSPFilterLibrary));
+          }, 10);
         });
-    </script>
-</body>
+      });
+    }
+    
+    initTabs();
 
+    // ---------- UI refs ----------
+    const $ = id => document.getElementById(id);
+    const familyEl = $('family'), kindEl = $('kind'), orderEl = $('order'), tapsEl = $('taps'),
+          rpEl = $('rp'), rsEl = $('rs'), fsEl = $('fs'), fcEl = $('fc'), f1El = $('f1'), f2El = $('f2'),
+          winEl = $('win'), betaEl = $('beta'), alphaEl = $('alpha'), sigmaEl = $('sigma'), poissonAlphaEl = $('poissonAlpha');
+    const orderVal = $('order-value'), tapsVal = $('taps-value'),
+          rpVal = $('rp-value'), rsVal = $('rs-value'),
+          fsVal = $('fs-value'), fcVal = $('fc-value'), f1Val = $('f1-value'), f2Val = $('f2-value'),
+          betaVal = $('beta-value'), alphaVal = $('alpha-value'), sigmaVal = $('sigma-value'), poissonAlphaVal = $('poissonAlpha-value');
+    const magCv = $('magCanvas'), phaseCv = $('phaseCanvas'), impCv = $('impCanvas'),
+          gdCv = $('gdCanvas'), pdCv = $('pdCanvas'), pzCv = $('pzCanvas'), sosOut = $('sosOut');
+
+    function displayToggles() {
+      const fam = familyEl.value, k = kindEl.value, isFIR = (fam === 'fir');
+
+      document.querySelectorAll('.only-iir').forEach(el => el.style.display = isFIR ? 'none' : '');
+      document.querySelectorAll('.only-fir').forEach(el => el.style.display = isFIR ? '' : 'none');
+      
+      // Show ripple controls for appropriate filter types
+      document.querySelectorAll('.only-ellip').forEach(el => el.style.display = (!isFIR && fam === 'ellip') ? '' : 'none');
+      document.querySelectorAll('.only-cheby1').forEach(el => el.style.display = (!isFIR && (fam === 'cheby1' || fam === 'ellip')) ? '' : 'none');
+      document.querySelectorAll('.only-cheby2').forEach(el => el.style.display = (!isFIR && (fam === 'cheby2' || fam === 'ellip')) ? '' : 'none');
+      
+      document.querySelectorAll('.only-lp-hp').forEach(el => el.style.display = (k === 'lowpass' || k === 'highpass') ? '' : 'none');
+      document.querySelectorAll('.only-bp-bs').forEach(el => el.style.display = (k === 'bandpass' || k === 'bandstop') ? '' : 'none');
+      document.querySelectorAll('.only-kaiser').forEach(el => el.style.display = (isFIR && winEl.value === 'kaiser') ? '' : 'none');
+      document.querySelectorAll('.only-tukey').forEach(el => el.style.display = (isFIR && winEl.value === 'tukey') ? '' : 'none');
+      document.querySelectorAll('.only-gauss').forEach(el => el.style.display = (isFIR && winEl.value === 'gauss') ? '' : 'none');
+      document.querySelectorAll('.only-poisson').forEach(el => el.style.display = (isFIR && winEl.value === 'poisson') ? '' : 'none');
+    }
+
+    function hookSlider(sl, out) {
+      const upd = () => { out.textContent = sl.value; design(); };
+      out.textContent = sl.value;
+      sl.addEventListener('input', upd);
+    }
+
+    // Hook up all sliders and selects
+    [orderEl, tapsEl, rpEl, rsEl, fsEl, fcEl, f1El, f2El, betaEl, alphaEl, sigmaEl, poissonAlphaEl].forEach(sl => {
+      if (sl) hookSlider(sl, document.getElementById(sl.id + '-value'));
+    });
+    
+    [familyEl, kindEl, winEl].forEach(e => e.addEventListener('change', () => { displayToggles(); design(); }));
+    
+    // Initial display setup
+    displayToggles();
+
+    // ---------- Canvas drawing utilities ----------
+    function setupCanvas(canvas) {
+      const ctx = canvas.getContext('2d');
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * window.devicePixelRatio;
+      canvas.height = rect.height * window.devicePixelRatio;
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+      return { ctx, w: rect.width, h: rect.height };
+    }
+
+    function clearCanvas(ctx, w, h) {
+      ctx.fillStyle = '#0a1018';
+      ctx.fillRect(0, 0, w, h);
+    }
+
+    function drawGrid(ctx, w, h, xTicks = 10, yTicks = 8, xLabel = '', yLabel = '', xMin = 0, xMax = 1, yMin = -1, yMax = 1) {
+      const padding = 70; // Increased padding to prevent overlap
+      const plotW = w - 2 * padding;
+      const plotH = h - 2 * padding;
+      
+      // Clear background
+      ctx.fillStyle = '#0a1018';
+      ctx.fillRect(0, 0, w, h);
+      
+      // Draw grid lines
+      ctx.strokeStyle = '#1b2330';
+      ctx.lineWidth = 1;
+      
+      // Vertical grid lines
+      for (let i = 0; i <= xTicks; i++) {
+        const x = padding + (i / xTicks) * plotW;
+        ctx.beginPath();
+        ctx.moveTo(x, padding);
+        ctx.lineTo(x, padding + plotH);
+        ctx.stroke();
+      }
+      
+      // Horizontal grid lines
+      for (let i = 0; i <= yTicks; i++) {
+        const y = padding + (i / yTicks) * plotH;
+        ctx.beginPath();
+        ctx.moveTo(padding, y);
+        ctx.lineTo(padding + plotW, y);
+        ctx.stroke();
+      }
+      
+      // Draw axes
+      ctx.strokeStyle = '#374151';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      // X-axis
+      ctx.moveTo(padding, padding + plotH);
+      ctx.lineTo(padding + plotW, padding + plotH);
+      // Y-axis
+      ctx.moveTo(padding, padding);
+      ctx.lineTo(padding, padding + plotH);
+      ctx.stroke();
+      
+      // Draw tick marks and labels
+      ctx.fillStyle = '#9ca3af';
+      ctx.font = '10px monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      
+      // X-axis ticks and labels
+      for (let i = 0; i <= xTicks; i++) {
+        const x = padding + (i / xTicks) * plotW;
+        const value = xMin + (i / xTicks) * (xMax - xMin);
+        
+        // Tick mark
+        ctx.strokeStyle = '#374151';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x, padding + plotH);
+        ctx.lineTo(x, padding + plotH + 5);
+        ctx.stroke();
+        
+        // Label
+        ctx.fillText(value.toFixed(2), x, padding + plotH + 8);
+      }
+      
+      // Y-axis ticks and labels
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      for (let i = 0; i <= yTicks; i++) {
+        const y = padding + (i / yTicks) * plotH;
+        const value = yMax - (i / yTicks) * (yMax - yMin);
+        
+        // Tick mark
+        ctx.strokeStyle = '#374151';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(padding, y);
+        ctx.lineTo(padding - 5, y);
+        ctx.stroke();
+        
+        // Label
+        ctx.fillText(value.toFixed(1), padding - 12, y);
+      }
+      
+      // Draw axis labels
+      ctx.fillStyle = '#d1d5db';
+      ctx.font = '12px monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      
+      // X-axis label
+      if (xLabel) {
+        ctx.save();
+        ctx.translate(padding + plotW/2, h - 5);
+        ctx.fillText(xLabel, 0, 0);
+        ctx.restore();
+      }
+      
+      // Y-axis label
+      if (yLabel) {
+        ctx.save();
+        ctx.translate(15, padding + plotH/2); // Moved further left to avoid overlap
+        ctx.rotate(-Math.PI/2);
+        ctx.fillText(yLabel, 0, 0);
+        ctx.restore();
+      }
+      
+      return { padding, plotW, plotH };
+    }
+
+    function plotLine(ctx, data, w, h, color = '#6bdcff', yMin = null, yMax = null, padding = 70) {
+      if (!data || data.length === 0) return;
+      
+      const plotW = w - 2 * padding;
+      const plotH = h - 2 * padding;
+      const xMin = 0, xMax = data.length - 1;
+      if (yMin === null) yMin = Math.min(...data);
+      if (yMax === null) yMax = Math.max(...data);
+      
+      // Handle edge case where yMin equals yMax
+      if (yMin === yMax) {
+        yMin -= 1;
+        yMax += 1;
+      }
+      
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      
+      for (let i = 0; i < data.length; i++) {
+        const x = padding + ((i - xMin) / (xMax - xMin)) * plotW;
+        const y = padding + plotH - ((data[i] - yMin) / (yMax - yMin)) * plotH;
+        
+        // Clamp y values to stay within plot area
+        const clampedY = Math.max(padding, Math.min(padding + plotH, y));
+        
+        if (i === 0) ctx.moveTo(x, clampedY);
+        else ctx.lineTo(x, clampedY);
+      }
+      ctx.stroke();
+    }
+
+    // ---------- Diagram redraw function ----------
+    let currentFilter = null;
+    let currentResponse = null;
+    let currentImpResp = null;
+    
+    function redrawDiagrams() {
+      if (!currentFilter || !currentResponse || !currentImpResp) return;
+      
+      try {
+        // Get the currently active tab
+        const activeTab = document.querySelector('.tab-content.active');
+        if (!activeTab) return;
+        
+        const tabId = activeTab.id;
+        
+        // Draw diagrams based on active tab
+        if (tabId === 'frequency') {
+          // Draw magnitude response
+          const { ctx: magCtx, w: magW, h: magH } = setupCanvas(magCv);
+          const magMin = Math.min(...currentResponse.magdB);
+          const magMax = Math.max(...currentResponse.magdB);
+          const magRange = magMax - magMin;
+          // Handle edge case where all values are the same
+          const padding = magRange === 0 ? 1 : magRange * 0.1;
+          const magYMin = magMin - padding;
+          const magYMax = magMax + padding;
+          const magGrid = drawGrid(magCtx, magW, magH, 10, 8, 'Frequency (Hz)', 'Magnitude (dB)', 
+            currentResponse.freqHz[0], currentResponse.freqHz[currentResponse.freqHz.length-1], magYMin, magYMax);
+          plotLine(magCtx, currentResponse.magdB, magW, magH, '#6bdcff', magYMin, magYMax, magGrid.padding);
+          
+          // Draw phase response
+          const { ctx: phaseCtx, w: phaseW, h: phaseH } = setupCanvas(phaseCv);
+          const phaseGrid = drawGrid(phaseCtx, phaseW, phaseH, 10, 8, 'Frequency (Hz)', 'Phase (deg)', 
+            currentResponse.freqHz[0], currentResponse.freqHz[currentResponse.freqHz.length-1], 
+            Math.min(...currentResponse.phaseDeg), Math.max(...currentResponse.phaseDeg));
+          plotLine(phaseCtx, currentResponse.phaseDeg, phaseW, phaseH, '#4ade80', 
+            Math.min(...currentResponse.phaseDeg), Math.max(...currentResponse.phaseDeg), phaseGrid.padding);
+        }
+        
+        if (tabId === 'time') {
+          // Draw impulse response
+          const { ctx: impCtx, w: impW, h: impH } = setupCanvas(impCv);
+          const impGrid = drawGrid(impCtx, impW, impH, 10, 8, 'Sample', 'Amplitude', 
+            0, currentImpResp.length-1, Math.min(...currentImpResp), Math.max(...currentImpResp));
+          plotLine(impCtx, currentImpResp, impW, impH, '#f87171', 
+            Math.min(...currentImpResp), Math.max(...currentImpResp), impGrid.padding);
+          
+          // Draw group delay
+          const { ctx: gdCtx, w: gdW, h: gdH } = setupCanvas(gdCv);
+          const gdSamplesTrimmed = currentResponse.gdSamples.slice(1, -1);
+          const gdFreqTrimmed = currentResponse.freqHz.slice(1, -1);
+          const gdGrid = drawGrid(gdCtx, gdW, gdH, 10, 8, 'Frequency (Hz)', 'Group Delay (samples)', 
+            gdFreqTrimmed[0], gdFreqTrimmed[gdFreqTrimmed.length-1], 
+            -50, 50);
+          plotLine(gdCtx, gdSamplesTrimmed, gdW, gdH, '#fbbf24', 
+            -50, 50, gdGrid.padding);
+          
+          // Draw phase delay
+          const { ctx: pdCtx, w: pdW, h: pdH } = setupCanvas(pdCv);
+          const pdGrid = drawGrid(pdCtx, pdW, pdH, 10, 8, 'Frequency (Hz)', 'Phase Delay (samples)', 
+            currentResponse.freqHz[0], currentResponse.freqHz[currentResponse.freqHz.length-1], 
+            Math.min(...currentResponse.pdSamples), Math.max(...currentResponse.pdSamples));
+          plotLine(pdCtx, currentResponse.pdSamples, pdW, pdH, '#a78bfa', 
+            Math.min(...currentResponse.pdSamples), Math.max(...currentResponse.pdSamples), pdGrid.padding);
+        }
+        
+        if (tabId === 'poles-zeros') {
+          // Draw poles and zeros
+          const { ctx: pzCtx, w: pzW, h: pzH } = setupCanvas(pzCv);
+          const pzGrid = drawGrid(pzCtx, pzW, pzH, 10, 10, 'Real', 'Imaginary', -1.1, 1.1, -1.1, 1.1);
+          
+          // Use square aspect ratio for pole-zero plot, centered in the grid
+          const plotSize = Math.min(pzGrid.plotW, pzGrid.plotH);
+          const centerX = pzGrid.padding + pzGrid.plotW / 2;  // Center horizontally in the full grid
+          const centerY = pzGrid.padding + pzGrid.plotH / 2;  // Center vertically in the full grid
+          
+          // Calculate radius for unit circle (radius = 1) using square aspect ratio
+          const radius = (plotSize / 2) * (1.0 / 1.1); // Scale to unit circle within the 1.1 range
+          
+          // Draw unit circle
+          pzCtx.strokeStyle = '#374151';
+          pzCtx.lineWidth = 2;
+          pzCtx.beginPath();
+          pzCtx.arc(centerX, centerY, Math.max(radius, 10), 0, 2*Math.PI); // Ensure minimum radius of 10
+          pzCtx.stroke();
+          
+          // Draw poles
+          if (currentFilter.zPoles) {
+            pzCtx.fillStyle = '#f87171';
+            pzCtx.strokeStyle = '#dc2626';
+            pzCtx.lineWidth = 3;
+            const plotSize = Math.min(pzGrid.plotW, pzGrid.plotH); // Use square aspect ratio
+            const plotCenterX = pzGrid.padding + plotSize / 2;
+            const plotCenterY = pzGrid.padding + plotSize / 2;
+            currentFilter.zPoles.forEach(pole => {
+              const x = centerX + (pole.re / 1.1) * (plotSize / 2);
+              const y = centerY - (pole.im / 1.1) * (plotSize / 2);
+              pzCtx.beginPath();
+              pzCtx.arc(x, y, 6, 0, 2*Math.PI);
+              pzCtx.fill();
+              pzCtx.stroke();
+            });
+          }
+          
+          // Draw zeros
+          if (currentFilter.zZeros) {
+            pzCtx.strokeStyle = '#4ade80';
+            pzCtx.lineWidth = 2;
+            const plotSize = Math.min(pzGrid.plotW, pzGrid.plotH); // Use square aspect ratio
+            const plotCenterX = pzGrid.padding + plotSize / 2;
+            const plotCenterY = pzGrid.padding + plotSize / 2;
+            currentFilter.zZeros.forEach(zero => {
+              const x = centerX + (zero.re / 1.1) * (plotSize / 2);
+              const y = centerY - (zero.im / 1.1) * (plotSize / 2);
+              pzCtx.beginPath();
+              pzCtx.moveTo(x-8, y-8);
+              pzCtx.lineTo(x+8, y+8);
+              pzCtx.moveTo(x+8, y-8);
+              pzCtx.lineTo(x-8, y+8);
+              pzCtx.stroke();
+            });
+          }
+          
+          // Draw FIR zeros if available
+          if (currentFilter.type === 'FIR' && currentFilter.zeros) {
+            pzCtx.strokeStyle = '#4ade80';
+            pzCtx.lineWidth = 2;
+            const plotSize = Math.min(pzGrid.plotW, pzGrid.plotH); // Use square aspect ratio
+            const plotCenterX = pzGrid.padding + plotSize / 2;
+            const plotCenterY = pzGrid.padding + plotSize / 2;
+            currentFilter.zeros().forEach(zero => {
+              const x = centerX + (zero.re / 1.1) * (plotSize / 2);
+              const y = centerY - (zero.im / 1.1) * (plotSize / 2);
+              pzCtx.beginPath();
+              pzCtx.moveTo(x-8, y-8);
+              pzCtx.lineTo(x+8, y+8);
+              pzCtx.moveTo(x+8, y-8);
+              pzCtx.lineTo(x-8, y+8);
+              pzCtx.stroke();
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Redraw error:', error);
+      }
+    }
+
+    // ---------- Biquad combination function ----------
+    function combineBiquads(sections) {
+      if (!sections || sections.length === 0) {
+        return { b: [1], a: [1] };
+      }
+      
+      // Start with the first section
+      let combinedB = [...sections[0].b];
+      let combinedA = [...sections[0].a];
+      
+      // Multiply each subsequent section
+      for (let i = 1; i < sections.length; i++) {
+        const section = sections[i];
+        
+        // Multiply numerator polynomials (b coefficients)
+        combinedB = multiplyPolynomials(combinedB, section.b);
+        
+        // Multiply denominator polynomials (a coefficients)
+        combinedA = multiplyPolynomials(combinedA, section.a);
+      }
+      
+      return { b: combinedB, a: combinedA };
+    }
+    
+    // Polynomial multiplication function
+    function multiplyPolynomials(poly1, poly2) {
+      const result = new Array(poly1.length + poly2.length - 1).fill(0);
+      
+      for (let i = 0; i < poly1.length; i++) {
+        for (let j = 0; j < poly2.length; j++) {
+          result[i + j] += poly1[i] * poly2[j];
+        }
+      }
+      
+      return result;
+    }
+
+    // ---------- Main design function ----------
+    function design() {
+      try {
+        const fam = familyEl.value, kind = kindEl.value;
+        const Fs = parseFloat(fsEl.value);
+        const isFIR = (fam === 'fir');
+        
+        let filter;
+        
+        if (isFIR) {
+          const taps = parseInt(tapsEl.value);
+          const window = winEl.value;
+          const beta = parseFloat(betaEl.value);
+          const alpha = parseFloat(alphaEl.value);
+          const sigma = parseFloat(sigmaEl.value);
+          const poissonAlpha = parseFloat(poissonAlphaEl.value);
+          
+          let f1, f2;
+          if (kind === 'lowpass' || kind === 'highpass') {
+            f1 = parseFloat(fcEl.value);
+            f2 = f1;
+          } else {
+            f1 = parseFloat(f1El.value);
+            f2 = parseFloat(f2El.value);
+          }
+          
+          const spec = { kind, taps, Fs, f1, f2, window, beta, alpha, sigma, poissonAlpha };
+          filter = FilterDSPClass.designFIR(spec);
+        } else {
+          const N = parseInt(orderEl.value);
+          const Rp = parseFloat(rpEl.value);
+          const Rs = parseFloat(rsEl.value);
+          
+          let f1, f2;
+          if (kind === 'lowpass' || kind === 'highpass') {
+            f1 = parseFloat(fcEl.value);
+            f2 = f1;
+          } else {
+            f1 = parseFloat(f1El.value);
+            f2 = parseFloat(f2El.value);
+          }
+          
+          const spec = { family: fam, kind, N, Rp, Rs, Fs, f1, f2 };
+          filter = FilterDSPClass.designIIR(spec);
+        }
+        
+        // Get frequency response
+        const response = filter.frequencyGrid(1024);
+        
+        // Store current data for efficient redrawing
+        currentFilter = filter;
+        currentResponse = response;
+        currentImpResp = filter.impulseResponse(256);
+        
+        // Draw magnitude response
+        const { ctx: magCtx, w: magW, h: magH } = setupCanvas(magCv);
+        const magMin = Math.min(...response.magdB);
+        const magMax = Math.max(...response.magdB);
+        const magRange = magMax - magMin;
+        // Handle edge case where all values are the same
+        const padding = magRange === 0 ? 1 : magRange * 0.1;
+        const magYMin = magMin - padding;
+        const magYMax = magMax + padding;
+        const magGrid = drawGrid(magCtx, magW, magH, 10, 8, 'Frequency (Hz)', 'Magnitude (dB)', 
+          response.freqHz[0], response.freqHz[response.freqHz.length-1], magYMin, magYMax);
+        plotLine(magCtx, response.magdB, magW, magH, '#6bdcff', magYMin, magYMax, magGrid.padding);
+        
+        // Draw phase response
+        const { ctx: phaseCtx, w: phaseW, h: phaseH } = setupCanvas(phaseCv);
+        const phaseGrid = drawGrid(phaseCtx, phaseW, phaseH, 10, 8, 'Frequency (Hz)', 'Phase (deg)', 
+          response.freqHz[0], response.freqHz[response.freqHz.length-1], 
+          Math.min(...response.phaseDeg), Math.max(...response.phaseDeg));
+        plotLine(phaseCtx, response.phaseDeg, phaseW, phaseH, '#4ade80', 
+          Math.min(...response.phaseDeg), Math.max(...response.phaseDeg), phaseGrid.padding);
+        
+        // Draw impulse response
+        const impResp = filter.impulseResponse(256);
+        const { ctx: impCtx, w: impW, h: impH } = setupCanvas(impCv);
+        const impGrid = drawGrid(impCtx, impW, impH, 10, 8, 'Sample', 'Amplitude', 
+          0, impResp.length-1, Math.min(...impResp), Math.max(...impResp));
+        plotLine(impCtx, impResp, impW, impH, '#f87171', 
+          Math.min(...impResp), Math.max(...impResp), impGrid.padding);
+        
+        // Draw group delay
+        const { ctx: gdCtx, w: gdW, h: gdH } = setupCanvas(gdCv);
+        const gdSamplesTrimmed = response.gdSamples.slice(1, -1);
+        const gdFreqTrimmed = response.freqHz.slice(1, -1);
+        const gdGrid = drawGrid(gdCtx, gdW, gdH, 10, 8, 'Frequency (Hz)', 'Group Delay (samples)', 
+          gdFreqTrimmed[0], gdFreqTrimmed[gdFreqTrimmed.length-1], 
+          -50, 50);
+        plotLine(gdCtx, gdSamplesTrimmed, gdW, gdH, '#fbbf24', 
+          -50, 50, gdGrid.padding);
+        
+        // Draw phase delay
+        const { ctx: pdCtx, w: pdW, h: pdH } = setupCanvas(pdCv);
+        const pdGrid = drawGrid(pdCtx, pdW, pdH, 10, 8, 'Frequency (Hz)', 'Phase Delay (samples)', 
+          response.freqHz[0], response.freqHz[response.freqHz.length-1], 
+          Math.min(...response.pdSamples), Math.max(...response.pdSamples));
+        plotLine(pdCtx, response.pdSamples, pdW, pdH, '#a78bfa', 
+          Math.min(...response.pdSamples), Math.max(...response.pdSamples), pdGrid.padding);
+        
+        // Draw pole-zero plot
+        const { ctx: pzCtx, w: pzW, h: pzH } = setupCanvas(pzCv);
+        const pzGrid = drawGrid(pzCtx, pzW, pzH, 10, 10, 'Real', 'Imaginary', -1.1, 1.1, -1.1, 1.1);
+        
+        // Use square aspect ratio for pole-zero plot, centered in the grid
+        const plotSize = Math.min(pzGrid.plotW, pzGrid.plotH);
+        const centerX = pzGrid.padding + pzGrid.plotW / 2;  // Center horizontally in the full grid
+        const centerY = pzGrid.padding + pzGrid.plotH / 2;  // Center vertically in the full grid
+        
+        // Calculate radius for unit circle (radius = 1) using square aspect ratio
+        const radius = (plotSize / 2) * (1.0 / 1.1); // Scale to unit circle within the 1.1 range
+        
+        // Draw crosshairs at origin for debugging
+        pzCtx.strokeStyle = '#666';
+        pzCtx.lineWidth = 1;
+        pzCtx.setLineDash([3, 3]);
+        pzCtx.beginPath();
+        pzCtx.moveTo(centerX - 20, centerY);
+        pzCtx.lineTo(centerX + 20, centerY);
+        pzCtx.moveTo(centerX, centerY - 20);
+        pzCtx.lineTo(centerX, centerY + 20);
+        pzCtx.stroke();
+        pzCtx.setLineDash([]);
+        
+        // Draw unit circle
+        pzCtx.strokeStyle = '#374151';
+        pzCtx.lineWidth = 2;
+        pzCtx.beginPath();
+        pzCtx.arc(centerX, centerY, Math.max(radius, 10), 0, 2*Math.PI); // Ensure minimum radius of 10
+        pzCtx.stroke();
+        
+        // Draw poles and zeros
+        if (filter.type === 'IIR') {
+          // Draw poles (circles)
+          pzCtx.fillStyle = '#f87171';
+          pzCtx.strokeStyle = '#dc2626';
+          pzCtx.lineWidth = 3;
+          const plotSize = Math.min(pzGrid.plotW, pzGrid.plotH); // Use square aspect ratio
+          const plotCenterX = pzGrid.padding + plotSize / 2;
+          const plotCenterY = pzGrid.padding + plotSize / 2;
+          filter.zPoles.forEach(pole => {
+            const x = centerX + (pole.re / 1.1) * (plotSize / 2);
+            const y = centerY - (pole.im / 1.1) * (plotSize / 2);
+            pzCtx.beginPath();
+            pzCtx.arc(x, y, 6, 0, 2*Math.PI);
+            pzCtx.fill();
+            pzCtx.stroke();
+          });
+          
+          // Draw zeros (X marks)
+          pzCtx.strokeStyle = '#4ade80';
+          pzCtx.lineWidth = 2;
+          filter.zZeros.forEach(zero => {
+            const x = centerX + (zero.re / 1.1) * (plotSize / 2);
+            const y = centerY - (zero.im / 1.1) * (plotSize / 2);
+            pzCtx.beginPath();
+            pzCtx.moveTo(x-8, y-8);
+            pzCtx.lineTo(x+8, y+8);
+            pzCtx.moveTo(x+8, y-8);
+            pzCtx.lineTo(x-8, y+8);
+            pzCtx.stroke();
+          });
+        } else {
+          // For FIR, draw zeros
+          const zeros = filter.zeros();
+          pzCtx.strokeStyle = '#4ade80';
+          pzCtx.lineWidth = 2;
+          const plotSize = Math.min(pzGrid.plotW, pzGrid.plotH); // Use square aspect ratio
+          const plotCenterX = pzGrid.padding + plotSize / 2;
+          const plotCenterY = pzGrid.padding + plotSize / 2;
+          zeros.forEach(zero => {
+            const x = centerX + (zero.re / 1.1) * (plotSize / 2);
+            const y = centerY - (zero.im / 1.1) * (plotSize / 2);
+            pzCtx.beginPath();
+            pzCtx.moveTo(x-8, y-8);
+            pzCtx.lineTo(x+8, y+8);
+            pzCtx.moveTo(x+8, y-8);
+            pzCtx.lineTo(x-8, y+8);
+            pzCtx.stroke();
+          });
+        }
+        
+        // Add labels
+        pzCtx.fillStyle = '#9bb0c8';
+        pzCtx.font = '12px system-ui';
+        pzCtx.textAlign = 'center';
+        pzCtx.fillText('1', centerX + radius + 15, centerY + 5);
+        pzCtx.fillText('-1', centerX - radius - 15, centerY + 5);
+        pzCtx.textAlign = 'right';
+        pzCtx.fillText('j', centerX - 5, centerY - radius - 10);
+        pzCtx.fillText('-j', centerX - 5, centerY + radius + 15);
+        
+        // Display filter coefficients
+        let output = '';
+        if (filter.type === 'IIR') {
+          output = '// IIR Filter - Second Order Sections\n';
+          filter.sections.forEach((section, i) => {
+            output += `// Section ${i + 1}\n`;
+            output += `b = [${section.b.map(x => x.toFixed(6)).join(', ')}];\n`;
+            output += `a = [${section.a.map(x => x.toFixed(6)).join(', ')}];\n\n`;
+          });
+          
+          // Add combined transfer function
+          output += '// Combined Transfer Function (Biquads Multiplied)\n';
+          const combined = combineBiquads(filter.sections);
+          output += `// Numerator coefficients (b):\n`;
+          output += `b_combined = [${combined.b.map(x => x.toFixed(6)).join(', ')}];\n\n`;
+          output += `// Denominator coefficients (a):\n`;
+          output += `a_combined = [${combined.a.map(x => x.toFixed(6)).join(', ')}];\n\n`;
+          output += `// Transfer function: H(z) = (b_combined[0] + b_combined[1]*z^-1 + ... + b_combined[n]*z^-n) / (a_combined[0] + a_combined[1]*z^-1 + ... + a_combined[n]*z^-n)\n`;
+        } else {
+          output = '// FIR Filter - Taps\n';
+          output += `taps = [${filter.taps.map(x => x.toFixed(6)).join(', ')}];\n`;
+        }
+        sosOut.textContent = output;
+        
+      } catch (error) {
+        console.error('Design error:', error);
+        sosOut.textContent = `Error: ${error.message}`;
+      }
+    }
+
+    // Initial design
+    design();
+    
+  })();
+  </script>
+</body>
 </html>
