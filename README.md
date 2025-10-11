@@ -14,6 +14,9 @@ A comprehensive JavaScript library for digital signal processing filter design a
 - Bandpass
 - Bandstop
 
+
+# DSP Filter Library
+
 ### Interactive Visualization
 - **Frequency Response**: Magnitude and phase plots
 - **Time Domain**: Impulse response, group delay, and phase delay
