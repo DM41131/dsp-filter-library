@@ -709,6 +709,43 @@
       }
     }
 
+    // ---------- Biquad combination function ----------
+    function combineBiquads(sections) {
+      if (!sections || sections.length === 0) {
+        return { b: [1], a: [1] };
+      }
+      
+      // Start with the first section
+      let combinedB = [...sections[0].b];
+      let combinedA = [...sections[0].a];
+      
+      // Multiply each subsequent section
+      for (let i = 1; i < sections.length; i++) {
+        const section = sections[i];
+        
+        // Multiply numerator polynomials (b coefficients)
+        combinedB = multiplyPolynomials(combinedB, section.b);
+        
+        // Multiply denominator polynomials (a coefficients)
+        combinedA = multiplyPolynomials(combinedA, section.a);
+      }
+      
+      return { b: combinedB, a: combinedA };
+    }
+    
+    // Polynomial multiplication function
+    function multiplyPolynomials(poly1, poly2) {
+      const result = new Array(poly1.length + poly2.length - 1).fill(0);
+      
+      for (let i = 0; i < poly1.length; i++) {
+        for (let j = 0; j < poly2.length; j++) {
+          result[i + j] += poly1[i] * poly2[j];
+        }
+      }
+      
+      return result;
+    }
+
     // ---------- Main design function ----------
     function design() {
       try {
@@ -911,6 +948,15 @@
             output += `b = [${section.b.map(x => x.toFixed(6)).join(', ')}];\n`;
             output += `a = [${section.a.map(x => x.toFixed(6)).join(', ')}];\n\n`;
           });
+          
+          // Add combined transfer function
+          output += '// Combined Transfer Function (Biquads Multiplied)\n';
+          const combined = combineBiquads(filter.sections);
+          output += `// Numerator coefficients (b):\n`;
+          output += `b_combined = [${combined.b.map(x => x.toFixed(6)).join(', ')}];\n\n`;
+          output += `// Denominator coefficients (a):\n`;
+          output += `a_combined = [${combined.a.map(x => x.toFixed(6)).join(', ')}];\n\n`;
+          output += `// Transfer function: H(z) = (b_combined[0] + b_combined[1]*z^-1 + ... + b_combined[n]*z^-n) / (a_combined[0] + a_combined[1]*z^-1 + ... + a_combined[n]*z^-n)\n`;
         } else {
           output = '// FIR Filter - Taps\n';
           output += `taps = [${filter.taps.map(x => x.toFixed(6)).join(', ')}];\n`;
