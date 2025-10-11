@@ -1,8 +1,8 @@
 {
   "name": "dsp-filter-library",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
-  "description": "A modular digital signal processing library with FIR/IIR filter design, FFT operations, and complex number utilities",
+  "description": "A comprehensive DSP library with 23 window functions, advanced FIR/IIR filter design, biquad combination, and interactive visualization",
   "main": "lib/index.cjs",
   "module": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -135,10 +135,20 @@
     "fft",
     "butterworth",
     "chebyshev",
+    "elliptic",
+    "bessel",
+    "linkwitz-riley",
     "window functions",
+    "kaiser",
+    "tukey",
+    "gaussian",
+    "blackman-harris",
+    "biquad",
+    "second-order sections",
     "complex numbers",
     "signal processing",
-    "audio processing"
+    "audio processing",
+    "interactive demo"
   ],
   "author": {
     "name": "Davit Akobia",
