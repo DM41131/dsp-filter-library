@@ -1,3 +1,4 @@
+
 # DSP Filter Library
 
 A comprehensive JavaScript library for digital signal processing filter design and analysis, supporting both IIR and FIR filters with interactive visualization.
@@ -48,6 +49,7 @@ const spec = {
   Fs: 48000,
   f1: 4000
 };
+
 
 const filter = FilterDSP.designIIR(spec);
 
